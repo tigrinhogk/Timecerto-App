@@ -63,27 +63,33 @@
         .btn-warning:hover {
             background-color: #e0a800;
         }
-         .btn-delete-match, .btn-edit-match, .btn-finalize-match {
+         .btn-delete-match, .btn-edit-match, .btn-finalize-match, .btn-move-player {
             color: white;
-            padding: 0.375rem 0.75rem; /* py-1.5 px-3 */
-            border-radius: 0.375rem; /* rounded-md */
-            font-size: 0.875rem; /* text-sm */
-            font-weight: 500; /* font-medium */
+            padding: 0.375rem 0.75rem; 
+            border-radius: 0.375rem; 
+            font-size: 0.875rem; 
+            font-weight: 500; 
             transition: background-color 0.2s ease-in-out;
             margin-left: 0.5rem;
         }
-        .btn-delete-match { background-color: #ef4444; } /* Red-500 */
-        .btn-delete-match:hover { background-color: #dc2626; } /* Red-600 */
-        .btn-edit-match { background-color: #f59e0b; } /* Amber-500 */
-        .btn-edit-match:hover { background-color: #d97706; } /* Amber-600 */
-        .btn-finalize-match { background-color: #10b981; } /* Emerald-500 */
-        .btn-finalize-match:hover { background-color: #059669; } /* Emerald-600 */
-        .btn-finalize-match:disabled { background-color: #6ee7b7; cursor: not-allowed; } /* Lighter Emerald */
+        .btn-delete-match { background-color: #ef4444; } 
+        .btn-delete-match:hover { background-color: #dc2626; } 
+        .btn-edit-match { background-color: #f59e0b; } 
+        .btn-edit-match:hover { background-color: #d97706; } 
+        .btn-finalize-match { background-color: #10b981; } 
+        .btn-finalize-match:hover { background-color: #059669; } 
+        .btn-finalize-match:disabled { background-color: #6ee7b7; cursor: not-allowed; } 
+        .btn-move-player {
+            background-color: #6366f1; /* Indigo-500 */
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+        .btn-move-player:hover { background-color: #4f46e5; } /* Indigo-600 */
 
 
         input, select {
-            border: 1px solid #d1d5db; /* border-gray-300 */
-            border-radius: 0.5rem; /* rounded-lg */
+            border: 1px solid #d1d5db; 
+            border-radius: 0.5rem; 
             padding: 0.75rem 1rem;
             width: 100%;
             transition: border-color 0.3s ease;
@@ -94,10 +100,10 @@
             transform: scale(1.2); 
         }
         input[type="number"].stat-input {
-            width: 50px; /* Largura menor para inputs de estatísticas */
-            padding: 0.5rem 0.25rem; /* Ajustado padding */
+            width: 50px; 
+            padding: 0.5rem 0.25rem; 
             text-align: center;
-            font-size: 0.875rem; /* Fonte menor para inputs */
+            font-size: 0.875rem; 
         }
         input:focus, select:focus {
             outline: none;
@@ -221,6 +227,16 @@
              padding: 0.5rem 0.75rem; 
              font-size: 0.875rem; 
         }
+        .option-card table .player-name-cell {
+            max-width: 120px; /* Limita largura da célula do nome */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .option-card table .move-button-cell {
+            width: 80px; /* Largura fixa para célula do botão */
+            text-align: right;
+        }
         .color-option {
             display: flex;
             align-items: center;
@@ -317,6 +333,7 @@
     <div class="container py-8">
         <h1 class="text-4xl font-bold text-center mb-8 text-gray-800">Divisor de Times de Futebol</h1>
 
+        <!-- Page 1: Add Players and Matches -->
         <div id="page1">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="card">
@@ -373,6 +390,7 @@
         </div>
 
 
+        <!-- Page 2: Division Options -->
         <div id="page2" class="hidden">
             <div class="card mt-8">
                 <h2 class="text-2xl font-semibold mb-6 text-gray-700">Escolha uma Divisão de Times</h2>
@@ -384,6 +402,7 @@
             </div>
         </div>
 
+        <!-- Page 3: Uniform Colors -->
         <div id="page3" class="hidden">
             <div class="card mt-8">
                 <h2 id="colorsPageTitle" class="text-2xl font-semibold mb-6 text-gray-700">Escolha as Cores dos Uniformes</h2>
@@ -426,6 +445,7 @@
             </div>
         </div>
 
+        <!-- Page 4: Game Date and Time -->
         <div id="page4" class="hidden">
             <div class="card mt-8">
                 <h2 id="dateTimePageTitle" class="text-2xl font-semibold mb-6 text-gray-700">Escolha o Dia e Horário</h2>
@@ -444,6 +464,7 @@
             </div>
         </div>
 
+        <!-- Page 5: Scheduled Match Confirmation (após agendamento inicial) -->
         <div id="page5" class="hidden">
             <div class="card mt-8 text-center">
                 <h2 class="text-3xl font-bold mb-4 text-gray-800">Partida Agendada!</h2>
@@ -472,6 +493,7 @@
             </div>
         </div>
 
+        <!-- Page 6: Finalize Match Score -->
         <div id="page6" class="hidden">
             <div class="card mt-8">
                 <h2 class="text-2xl font-semibold mb-6 text-gray-700">Finalizar Partida e Registrar Placar</h2>
@@ -596,45 +618,45 @@
 
         // --- Funções de localStorage com console.log para debug ---
         function savePlayersToLocalStorage() {
-            console.log("Salvando jogadores no localStorage:", JSON.stringify(players));
+            // console.log("Salvando jogadores no localStorage:", JSON.stringify(players));
             localStorage.setItem('soccerTeamDividerPlayers', JSON.stringify(players));
         }
         function loadPlayersFromLocalStorage() {
-            console.log("Carregando jogadores do localStorage...");
+            // console.log("Carregando jogadores do localStorage...");
             const stored = localStorage.getItem('soccerTeamDividerPlayers');
             if (stored) {
                 players = JSON.parse(stored).map(player => ({...player, isPlayingThisWeek: player.isPlayingThisWeek === undefined ? true : player.isPlayingThisWeek }));
-                console.log("Jogadores carregados:", players);
+                // console.log("Jogadores carregados:", players);
             } else {
-                console.log("Nenhum jogador encontrado no localStorage.");
+                // console.log("Nenhum jogador encontrado no localStorage.");
             }
         }
         function saveScheduledMatchesToLocalStorage() {
-            console.log("Salvando partidas agendadas no localStorage:", JSON.stringify(scheduledMatches));
+            // console.log("Salvando partidas agendadas no localStorage:", JSON.stringify(scheduledMatches));
             localStorage.setItem('soccerTeamDividerMatches', JSON.stringify(scheduledMatches));
         }
         function loadScheduledMatchesFromLocalStorage() {
-            console.log("Carregando partidas agendadas do localStorage...");
+            // console.log("Carregando partidas agendadas do localStorage...");
             const stored = localStorage.getItem('soccerTeamDividerMatches');
             if (stored) {
                 scheduledMatches = JSON.parse(stored);
-                console.log("Partidas agendadas carregadas:", scheduledMatches);
+                // console.log("Partidas agendadas carregadas:", scheduledMatches);
             } else {
-                console.log("Nenhuma partida agendada encontrada no localStorage.");
+                // console.log("Nenhuma partida agendada encontrada no localStorage.");
             }
         }
         function saveFinishedMatchesToLocalStorage() {
-            console.log("Salvando partidas finalizadas no localStorage:", JSON.stringify(finishedMatches));
+            // console.log("Salvando partidas finalizadas no localStorage:", JSON.stringify(finishedMatches));
             localStorage.setItem('soccerTeamDividerFinishedMatches', JSON.stringify(finishedMatches));
         }
         function loadFinishedMatchesFromLocalStorage() {
-            console.log("Carregando partidas finalizadas do localStorage...");
+            // console.log("Carregando partidas finalizadas do localStorage...");
             const stored = localStorage.getItem('soccerTeamDividerFinishedMatches');
             if (stored) {
                 finishedMatches = JSON.parse(stored);
-                console.log("Partidas finalizadas carregadas:", finishedMatches);
+                // console.log("Partidas finalizadas carregadas:", finishedMatches);
             } else {
-                console.log("Nenhuma partida finalizada encontrada no localStorage.");
+                // console.log("Nenhuma partida finalizada encontrada no localStorage.");
             }
         }
 
@@ -785,10 +807,106 @@
         }
 
         function renderSingleDivisionOption(division, index, container) {
-            const card = document.createElement('div'); card.className = 'option-card'; 
-            card.innerHTML = `<input type="radio" name="divisionOption" id="option${index}" value="${index}" class="hidden"><label for="option${index}" class="block cursor-pointer"><h3 class="text-xl font-semibold mb-3 text-gray-700">Opção ${index + 1}</h3><div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 text-base"><span class="font-medium mb-1 sm:mb-0">Time A (OVR: ${division.teamA.reduce((s,p)=>s+p.overall,0)})</span><span class="font-medium">Time B (OVR: ${division.teamB.reduce((s,p)=>s+p.overall,0)})</span></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div><h4 class="font-semibold text-gray-600 mb-2">Time A</h4><table class="w-full text-left"><thead><tr class="bg-gray-50"><th class="px-3 py-2">Pos</th><th class="px-3 py-2">Nome</th><th class="px-3 py-2 text-right">OVR</th></tr></thead><tbody>${sortPlayersForDisplay(division.teamA).map(p=>`<tr><td class="px-3 py-2">${p.position}</td><td class="px-3 py-2 truncate" title="${p.name}">${getPositionIcon(p.position)} ${p.name}</td><td class="px-3 py-2 text-right">${p.overall}</td></tr>`).join('')}${division.teamA.length===0?'<tr><td colspan="3" class="px-3 py-2 text-center text-gray-400">Vazio</td></tr>':''}</tbody></table></div><div><h4 class="font-semibold text-gray-600 mb-2">Time B</h4><table class="w-full text-left"><thead><tr class="bg-gray-50"><th class="px-3 py-2">Pos</th><th class="px-3 py-2">Nome</th><th class="px-3 py-2 text-right">OVR</th></tr></thead><tbody>${sortPlayersForDisplay(division.teamB).map(p=>`<tr><td class="px-3 py-2">${p.position}</td><td class="px-3 py-2 truncate" title="${p.name}">${getPositionIcon(p.position)} ${p.name}</td><td class="px-3 py-2 text-right">${p.overall}</td></tr>`).join('')}${division.teamB.length===0?'<tr><td colspan="3" class="px-3 py-2 text-center text-gray-400">Vazio</td></tr>':''}</tbody></table></div></div></label>`;
+            const card = document.createElement('div'); 
+            card.className = 'option-card'; 
+            card.id = `option-card-${index}`; // Adiciona ID para atualização
+            
+            const generateTableHTML = (teamPlayers, teamChar) => {
+                let tableHTML = `<table class="w-full text-left"><thead><tr class="bg-gray-50"><th class="px-3 py-2">Pos</th><th class="px-3 py-2 player-name-cell">Nome</th><th class="px-3 py-2 text-right">OVR</th><th class="px-3 py-2 move-button-cell">Ação</th></tr></thead><tbody class="team-${teamChar.toLowerCase()}-list-tbody">`;
+                if (teamPlayers.length === 0) {
+                    tableHTML += '<tr><td colspan="4" class="px-3 py-2 text-center text-gray-400">Vazio</td></tr>';
+                } else {
+                    sortPlayersForDisplay(teamPlayers).forEach(p => {
+                        const targetTeamChar = teamChar === 'A' ? 'B' : 'A';
+                        tableHTML += `<tr>
+                            <td class="px-3 py-2">${p.position}</td>
+                            <td class="px-3 py-2 player-name-cell truncate" title="${p.name}">${getPositionIcon(p.position)} ${p.name}</td>
+                            <td class="px-3 py-2 text-right">${p.overall}</td>
+                            <td class="px-3 py-2 move-button-cell"><button class="btn-move-player" data-action="move-player" data-option-index="${index}" data-player-id="${p.id}" data-current-team="${teamChar}">Mover</button></td>
+                        </tr>`;
+                    });
+                }
+                tableHTML += '</tbody></table>';
+                return tableHTML;
+            };
+
+            card.innerHTML = `
+                <input type="radio" name="divisionOption" id="option${index}" value="${index}" class="hidden">
+                <label for="option${index}" class="block cursor-pointer">
+                    <h3 class="text-xl font-semibold mb-3 text-gray-700">Opção ${index + 1}</h3>
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 text-base">
+                        <span class="font-medium mb-1 sm:mb-0">Time A (OVR: <span class="team-a-overall-value">${division.teamA.reduce((s,p)=>s+p.overall,0)}</span>)</span>
+                        <span class="font-medium">Time B (OVR: <span class="team-b-overall-value">${division.teamB.reduce((s,p)=>s+p.overall,0)}</span>)</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-semibold text-gray-600 mb-2">Time A</h4>
+                            ${generateTableHTML(division.teamA, 'A')}
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-600 mb-2">Time B</h4>
+                            ${generateTableHTML(division.teamB, 'B')}
+                        </div>
+                    </div>
+                </label>`;
             container.appendChild(card);
-            card.querySelector('label').addEventListener('click',()=>{document.querySelectorAll('#divisionOptionsContainer .option-card').forEach(c=>c.classList.remove('selected'));card.classList.add('selected');selectedDivisionIndex=index;confirmDivisionBtn.disabled=false;});
+            
+            // O event listener para seleção do card (radio button) ainda é no label
+            card.querySelector('label').addEventListener('click',(e) => {
+                // Impede que o clique no botão de mover também selecione o card
+                if (e.target.closest('button[data-action="move-player"]')) {
+                    return;
+                }
+                document.querySelectorAll('#divisionOptionsContainer .option-card').forEach(c=>c.classList.remove('selected'));
+                card.classList.add('selected');
+                selectedDivisionIndex=index;
+                confirmDivisionBtn.disabled=false;
+            });
+        }
+
+        function updateOptionCardDisplay(optionIndex) {
+            const division = divisionOptions[optionIndex];
+            const cardElement = document.getElementById(`option-card-${optionIndex}`);
+            if (!cardElement || !division) return;
+
+            cardElement.querySelector('.team-a-overall-value').textContent = division.teamA.reduce((s,p)=>s+p.overall,0);
+            cardElement.querySelector('.team-b-overall-value').textContent = division.teamB.reduce((s,p)=>s+p.overall,0);
+
+            const generateTableRowsHTML = (teamPlayers, teamChar) => {
+                if (teamPlayers.length === 0) {
+                    return '<tr><td colspan="4" class="px-3 py-2 text-center text-gray-400">Vazio</td></tr>';
+                }
+                return sortPlayersForDisplay(teamPlayers).map(p => {
+                    return `<tr>
+                        <td class="px-3 py-2">${p.position}</td>
+                        <td class="px-3 py-2 player-name-cell truncate" title="${p.name}">${getPositionIcon(p.position)} ${p.name}</td>
+                        <td class="px-3 py-2 text-right">${p.overall}</td>
+                        <td class="px-3 py-2 move-button-cell"><button class="btn-move-player" data-action="move-player" data-option-index="${optionIndex}" data-player-id="${p.id}" data-current-team="${teamChar}">Mover</button></td>
+                    </tr>`;
+                }).join('');
+            };
+
+            const tbodyA = cardElement.querySelector('.team-a-list-tbody');
+            if (tbodyA) tbodyA.innerHTML = generateTableRowsHTML(division.teamA, 'A');
+            
+            const tbodyB = cardElement.querySelector('.team-b-list-tbody');
+            if (tbodyB) tbodyB.innerHTML = generateTableRowsHTML(division.teamB, 'B');
+        }
+
+
+        window.movePlayerInOption = function(optionIndex, playerId, currentTeamChar) {
+            const division = divisionOptions[optionIndex];
+            if (!division) return;
+
+            const currentTeamKey = currentTeamChar === 'A' ? 'teamA' : 'teamB';
+            const targetTeamKey = currentTeamChar === 'A' ? 'teamB' : 'teamA';
+
+            const playerIndex = division[currentTeamKey].findIndex(p => p.id === playerId);
+            if (playerIndex > -1) {
+                const [playerToMove] = division[currentTeamKey].splice(playerIndex, 1);
+                division[targetTeamKey].push(playerToMove);
+                updateOptionCardDisplay(optionIndex); // Atualiza apenas o card modificado
+            }
         }
         
         function shuffleArray(array) {
@@ -824,7 +942,6 @@
             let midfielders = availablePlayers.filter(p => p.position === 'MEI');
             let attackers = availablePlayers.filter(p => p.position === 'ATA');
 
-            // 1. Goleiros
             if (goalkeepers.length === 1) {
                 assignPlayer(pickAndRemove(goalkeepers), (seed === 2) ? 'teamB' : 'teamA');
             } else if (goalkeepers.length >= 2) {
@@ -832,7 +949,6 @@
                 assignPlayer(pickAndRemove(goalkeepers), 'teamB');
             }
 
-            // 2. Tentativa de 1 MEI e 1 ATA por time
             let firstPickMid = (seed === 1) ? 'teamA' : (seed === 2 ? 'teamB' : 'teamA');
             let secondPickMid = firstPickMid === 'teamA' ? 'teamB' : 'teamA';
             let firstPickAtk = (seed === 1 || seed === 3) ? 'teamA' : 'teamB'; 
@@ -896,6 +1012,19 @@
             divisionOptions.forEach((d,i)=>renderSingleDivisionOption(d,i,divisionOptionsContainer));
             window.showPage(page2);
         });
+
+        // Adiciona event listener para mover jogadores nas opções de divisão
+        divisionOptionsContainer.addEventListener('click', (event) => {
+            const targetButton = event.target.closest('button[data-action="move-player"]');
+            if (targetButton) {
+                const optionIndex = parseInt(targetButton.dataset.optionIndex);
+                const playerId = parseInt(targetButton.dataset.playerId);
+                const currentTeamChar = targetButton.dataset.currentTeam; // 'A' ou 'B'
+                
+                window.movePlayerInOption(optionIndex, playerId, currentTeamChar);
+            }
+        });
+
 
         confirmDivisionBtn.addEventListener('click',()=>{if(selectedDivisionIndex===-1){showMessageBox('Selecione uma divisão.', 'error');return;}window.showPage(page3); colorsPageTitle.textContent = "Escolha as Cores dos Uniformes";});
         
@@ -1272,8 +1401,7 @@
                     let allStatsValid = true;
                     
                     const collectedStats = { teamA: [], teamB: [] };
-                    // Não precisamos mais de ownGoalsByTeamA/B aqui, pois o placar é o que o usuário digita.
-
+                    
                     const processTeamStats = (teamKey, teamContainerId) => {
                         matchToFinalize[teamKey].players.forEach(pInMatch => {
                             const playerStats = { gols: 0, assistencias: 0, defesas: 0, golsSofridos: 0, golsContra: 0 };
