@@ -63,7 +63,7 @@
         .btn-warning:hover {
             background-color: #e0a800;
         }
-         .btn-delete-match, .btn-edit-match, .btn-finalize-match, .btn-move-player {
+         .btn-delete-match, .btn-edit-match, .btn-finalize-match, .btn-move-player, .btn-edit-finished-match {
             color: white;
             padding: 0.375rem 0.75rem; 
             border-radius: 0.375rem; 
@@ -74,8 +74,8 @@
         }
         .btn-delete-match { background-color: #ef4444; } 
         .btn-delete-match:hover { background-color: #dc2626; } 
-        .btn-edit-match { background-color: #f59e0b; } 
-        .btn-edit-match:hover { background-color: #d97706; } 
+        .btn-edit-match, .btn-edit-finished-match { background-color: #f59e0b; } 
+        .btn-edit-match:hover, .btn-edit-finished-match:hover { background-color: #d97706; } 
         .btn-finalize-match { background-color: #10b981; } 
         .btn-finalize-match:hover { background-color: #059669; } 
         .btn-finalize-match:disabled { background-color: #6ee7b7; cursor: not-allowed; } 
@@ -208,14 +208,13 @@
         .hidden {
             display: none !important;
         }
-        .option-card {
+        .option-card, .edit-match-teams-card { /* Estilo compartilhado */
             border: 2px solid #e5e7eb;
             border-radius: 0.75rem;
             padding: 1.5rem; 
-            cursor: pointer;
             transition: all 0.2s ease-in-out;
         }
-        .option-card.selected {
+        .option-card.selected { /* Apenas para option-card */
             border-color: #4CAF50;
             box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
         }
@@ -223,18 +222,21 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
         }
-        .option-card table th, .option-card table td {
+        .option-card table th, .option-card table td,
+        .edit-match-teams-card table th, .edit-match-teams-card table td {
              padding: 0.5rem 0.75rem; 
              font-size: 0.875rem; 
         }
-        .option-card table .player-name-cell {
-            max-width: 120px; /* Limita largura da célula do nome */
+        .option-card table .player-name-cell,
+        .edit-match-teams-card table .player-name-cell {
+            max-width: 120px; 
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
-        .option-card table .move-button-cell {
-            width: 80px; /* Largura fixa para célula do botão */
+        .option-card table .move-button-cell,
+        .edit-match-teams-card table .move-button-cell {
+            width: 80px; 
             text-align: right;
         }
         .color-option {
@@ -295,6 +297,16 @@
             font-size: 0.75rem; /* text-xs */
             color: #6b7280; /* text-gray-500 */
             margin-top: 0.25rem;
+        }
+        .match-item .overall-change {
+            font-size: 0.75rem;
+            margin-left: 0.25rem;
+        }
+        .match-item .overall-change.positive {
+            color: #10b981; /* green-500 */
+        }
+        .match-item .overall-change.negative {
+            color: #ef4444; /* red-500 */
         }
         .score-input {
             width: 60px;
@@ -439,6 +451,7 @@
                     </div>
                 </div>
                 <div class="mt-8 flex flex-col sm:flex-row gap-4">
+                    <button id="backToEditMatchTeamsBtnPage3" class="btn btn-secondary w-full sm:w-auto hidden">Voltar para Editar Times</button>
                     <button id="backToDivisionBtnPage3" class="btn btn-secondary w-full sm:w-auto">Voltar para Divisões</button>
                     <button id="confirmColorsBtn" class="btn btn-primary w-full sm:w-auto flex-grow" disabled>Confirmar Cores</button>
                 </div>
@@ -496,7 +509,7 @@
         <!-- Page 6: Finalize Match Score -->
         <div id="page6" class="hidden">
             <div class="card mt-8">
-                <h2 class="text-2xl font-semibold mb-6 text-gray-700">Finalizar Partida e Registrar Placar</h2>
+                <h2 id="finalizePageTitle" class="text-2xl font-semibold mb-6 text-gray-700">Finalizar Partida e Registrar Placar</h2>
                 <div class="mb-6">
                     <h3 class="text-xl font-medium text-gray-700 mb-2">Placar Final:</h3>
                     <div class="flex items-center justify-center gap-4">
@@ -532,6 +545,27 @@
             </div>
         </div>
 
+        <!-- Page 7: Edit Match Teams -->
+        <div id="page7_edit_match_teams" class="hidden">
+            <div class="card mt-8">
+                <h2 class="text-2xl font-semibold mb-6 text-gray-700">Editar Times da Partida Agendada</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 edit-match-teams-card">
+                    <div>
+                        <h4 class="font-semibold text-gray-700 mb-2">Time A (OVR: <span id="editMatchTeamAOverall">0</span>)</h4>
+                        <div id="editMatchTeamAListContainer"></div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-700 mb-2">Time B (OVR: <span id="editMatchTeamBOverall">0</span>)</h4>
+                        <div id="editMatchTeamBListContainer"></div>
+                    </div>
+                </div>
+                <div class="mt-8 flex flex-col sm:flex-row gap-4">
+                    <button id="cancelEditMatchTeamsBtn" class="btn btn-danger w-full sm:w-auto">Cancelar Edição de Times</button>
+                    <button id="saveMatchTeamsAndGoToColorsBtn" class="btn btn-primary w-full sm:w-auto flex-grow">Salvar Times e Editar Cores/Data</button>
+                </div>
+            </div>
+        </div>
+
 
     </div>
 
@@ -552,6 +586,7 @@
         let editingPlayerId = null; 
         let editingMatchId = null; 
         let finalizingMatchId = null; 
+        let isEditingFinishedGameMode = false; // Nova flag
         let messageTimeout = null; 
 
         // Referências aos elementos do DOM
@@ -561,6 +596,8 @@
         const page4 = document.getElementById('page4');
         const page5 = document.getElementById('page5');
         const page6 = document.getElementById('page6'); 
+        const page7_edit_match_teams = document.getElementById('page7_edit_match_teams');
+
 
         const playerFormTitle = document.getElementById('playerFormTitle');
         const playerNameInput = document.getElementById('playerName');
@@ -582,6 +619,7 @@
         const teamAColorOptions = document.querySelectorAll('label[data-team="A"]');
         const teamBColorOptions = document.querySelectorAll('label[data-team="B"]');
         const confirmColorsBtn = document.getElementById('confirmColorsBtn');
+        const backToEditMatchTeamsBtnPage3 = document.getElementById('backToEditMatchTeamsBtnPage3');
         
         const dateTimePageTitle = document.getElementById('dateTimePageTitle');
         const gameDateInput = document.getElementById('gameDate');
@@ -604,8 +642,7 @@
         const finishedMatchesListDiv = document.getElementById('finishedMatchesList');
         const noFinishedMatchesMessageP = document.getElementById('noFinishedMatchesMessage');
 
-        // Elementos da Página 6 (Finalizar Partida)
-        // const finalizeMatchInfoDiv = document.getElementById('finalizeMatchInfo'); // Já declarado acima
+        const finalizePageTitle = document.getElementById('finalizePageTitle');
         const scoreTeamAInput = document.getElementById('scoreTeamA');
         const scoreTeamBInput = document.getElementById('scoreTeamB');
         const scoreErrorP = document.getElementById('scoreError');
@@ -615,53 +652,34 @@
         const cancelFinalizeBtn = document.getElementById('cancelFinalizeBtn');
         const saveScoreBtn = document.getElementById('saveScoreBtn');
 
+        // Elementos da Page 7 (Edit Match Teams)
+        const editMatchTeamAListContainer = document.getElementById('editMatchTeamAListContainer');
+        const editMatchTeamBListContainer = document.getElementById('editMatchTeamBListContainer');
+        const editMatchTeamAOverallSpan = document.getElementById('editMatchTeamAOverall');
+        const editMatchTeamBOverallSpan = document.getElementById('editMatchTeamBOverall');
+        const cancelEditMatchTeamsBtn = document.getElementById('cancelEditMatchTeamsBtn');
+        const saveMatchTeamsAndGoToColorsBtn = document.getElementById('saveMatchTeamsAndGoToColorsBtn');
 
-        // --- Funções de localStorage com console.log para debug ---
-        function savePlayersToLocalStorage() {
-            // console.log("Salvando jogadores no localStorage:", JSON.stringify(players));
-            localStorage.setItem('soccerTeamDividerPlayers', JSON.stringify(players));
-        }
+
+        // --- Funções de localStorage ---
+        function savePlayersToLocalStorage() { localStorage.setItem('soccerTeamDividerPlayers', JSON.stringify(players)); }
         function loadPlayersFromLocalStorage() {
-            // console.log("Carregando jogadores do localStorage...");
             const stored = localStorage.getItem('soccerTeamDividerPlayers');
-            if (stored) {
-                players = JSON.parse(stored).map(player => ({...player, isPlayingThisWeek: player.isPlayingThisWeek === undefined ? true : player.isPlayingThisWeek }));
-                // console.log("Jogadores carregados:", players);
-            } else {
-                // console.log("Nenhum jogador encontrado no localStorage.");
-            }
+            if (stored) players = JSON.parse(stored).map(player => ({...player, isPlayingThisWeek: player.isPlayingThisWeek === undefined ? true : player.isPlayingThisWeek }));
         }
-        function saveScheduledMatchesToLocalStorage() {
-            // console.log("Salvando partidas agendadas no localStorage:", JSON.stringify(scheduledMatches));
-            localStorage.setItem('soccerTeamDividerMatches', JSON.stringify(scheduledMatches));
-        }
+        function saveScheduledMatchesToLocalStorage() { localStorage.setItem('soccerTeamDividerMatches', JSON.stringify(scheduledMatches)); }
         function loadScheduledMatchesFromLocalStorage() {
-            // console.log("Carregando partidas agendadas do localStorage...");
             const stored = localStorage.getItem('soccerTeamDividerMatches');
-            if (stored) {
-                scheduledMatches = JSON.parse(stored);
-                // console.log("Partidas agendadas carregadas:", scheduledMatches);
-            } else {
-                // console.log("Nenhuma partida agendada encontrada no localStorage.");
-            }
+            if (stored) scheduledMatches = JSON.parse(stored);
         }
-        function saveFinishedMatchesToLocalStorage() {
-            // console.log("Salvando partidas finalizadas no localStorage:", JSON.stringify(finishedMatches));
-            localStorage.setItem('soccerTeamDividerFinishedMatches', JSON.stringify(finishedMatches));
-        }
+        function saveFinishedMatchesToLocalStorage() { localStorage.setItem('soccerTeamDividerFinishedMatches', JSON.stringify(finishedMatches));}
         function loadFinishedMatchesFromLocalStorage() {
-            // console.log("Carregando partidas finalizadas do localStorage...");
             const stored = localStorage.getItem('soccerTeamDividerFinishedMatches');
-            if (stored) {
-                finishedMatches = JSON.parse(stored);
-                // console.log("Partidas finalizadas carregadas:", finishedMatches);
-            } else {
-                // console.log("Nenhuma partida finalizada encontrada no localStorage.");
-            }
+            if (stored) finishedMatches = JSON.parse(stored);
         }
 
         window.showPage = function(pageToShow) {
-            [page1, page2, page3, page4, page5, page6].forEach(page => {
+            [page1, page2, page3, page4, page5, page6, page7_edit_match_teams].forEach(page => {
                 page.classList.toggle('hidden', page !== pageToShow);
             });
         }
@@ -681,6 +699,7 @@
             selectedColors = { teamA: null, teamB: null };
             selectedDate = null; selectedTime = null;
             editingMatchId = null; finalizingMatchId = null; 
+            isEditingFinishedGameMode = false; // Reseta a flag
 
             players.forEach(player => player.isPlayingThisWeek = false); 
             savePlayersToLocalStorage(); 
@@ -725,7 +744,7 @@
             let isValid = true;
             ['playerNameError', 'playerOverallError', 'playerPositionError'].forEach(id => document.getElementById(id).classList.add('hidden'));
             if (playerNameInput.value.trim() === '') { document.getElementById('playerNameError').classList.remove('hidden'); isValid = false; }
-            const overall = parseInt(playerOverallInput.value);
+            const overall = parseFloat(playerOverallInput.value); 
             if (isNaN(overall) || overall < 50 || overall > 100) { document.getElementById('playerOverallError').classList.remove('hidden'); isValid = false; }
             if (playerPositionSelect.value === '') { document.getElementById('playerPositionError').classList.remove('hidden'); isValid = false; }
             return isValid;
@@ -734,7 +753,9 @@
         addPlayerBtn.addEventListener('click', () => {
             try { 
                 if (!validatePlayerInputs()) return;
-                const name = playerNameInput.value.trim(), overall = parseInt(playerOverallInput.value), position = playerPositionSelect.value;
+                const name = playerNameInput.value.trim();
+                const overall = parseFloat(playerOverallInput.value); 
+                const position = playerPositionSelect.value;
                 if (editingPlayerId !== null) {
                     const index = players.findIndex(p => p.id === editingPlayerId);
                     if (index > -1) { Object.assign(players[index], {name, overall, position}); showMessageBox('Jogador atualizado!'); }
@@ -751,7 +772,9 @@
             try {
                 const p = players.find(p => p.id === id);
                 if (p) {
-                    editingPlayerId = id; playerNameInput.value = p.name; playerOverallInput.value = p.overall; playerPositionSelect.value = p.position;
+                    editingPlayerId = id; playerNameInput.value = p.name; 
+                    playerOverallInput.value = p.overall; 
+                    playerPositionSelect.value = p.position;
                     playerFormTitle.textContent = `Editar Jogador: ${p.name}`; addPlayerBtn.textContent = 'Salvar Alterações';
                     cancelEditBtn.classList.remove('hidden'); playerNameInput.focus();
                     playerFormTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -794,7 +817,7 @@
                 sortedPlayers.forEach(p => {
                     const div = document.createElement('div'); 
                     div.className = 'player-item bg-gray-50 p-3 rounded-lg';
-                    div.innerHTML = `<div class="player-info"><input type="checkbox" id="player-select-${p.id}" onchange="window.togglePlayerSelection(${p.id})" ${p.isPlayingThisWeek ? 'checked' : ''} class="form-checkbox h-5 w-5 text-green-600"><label for="player-select-${p.id}" class="player-details cursor-pointer ml-2"><span class="font-medium text-gray-800">${getPositionIcon(p.position)} ${p.name}</span><span class="text-sm text-gray-600 ml-2">(OVR: ${p.overall}, Pos: ${p.position})</span></label></div><div class="player-actions flex-shrink-0"><button class="edit-btn" onclick="window.editPlayer(${p.id})">Editar</button><button class="delete-btn" onclick="window.removePlayer(${p.id})">Remover</button></div>`;
+                    div.innerHTML = `<div class="player-info"><input type="checkbox" id="player-select-${p.id}" onchange="window.togglePlayerSelection(${p.id})" ${p.isPlayingThisWeek ? 'checked' : ''} class="form-checkbox h-5 w-5 text-green-600"><label for="player-select-${p.id}" class="player-details cursor-pointer ml-2"><span class="font-medium text-gray-800">${getPositionIcon(p.position)} ${p.name}</span><span class="text-sm text-gray-600 ml-2">(OVR: ${Math.round(p.overall)}, Pos: ${p.position})</span></label></div><div class="player-actions flex-shrink-0"><button class="edit-btn" onclick="window.editPlayer(${p.id})">Editar</button><button class="delete-btn" onclick="window.removePlayer(${p.id})">Remover</button></div>`;
                     playerListDiv.appendChild(div);
                 });
             }
@@ -803,13 +826,12 @@
 
         function sortPlayersForDisplay(arr) { 
             const order = {'GO':1,'ZAG':2,'MEI':3,'ATA':4};
-            return [...arr].sort((a,b) => (order[a.position]||99)-(order[b.position]||99) || b.overall-a.overall);
+            return [...arr].sort((a,b) => (order[a.position]||99)-(order[b.position]||99) || Math.round(b.overall)-Math.round(a.overall));
         }
 
         function renderSingleDivisionOption(division, index, container) {
-            const card = document.createElement('div'); 
-            card.className = 'option-card'; 
-            card.id = `option-card-${index}`; // Adiciona ID para atualização
+            const card = document.createElement('div'); card.className = 'option-card'; 
+            card.id = `option-card-${index}`; 
             
             const generateTableHTML = (teamPlayers, teamChar) => {
                 let tableHTML = `<table class="w-full text-left"><thead><tr class="bg-gray-50"><th class="px-3 py-2">Pos</th><th class="px-3 py-2 player-name-cell">Nome</th><th class="px-3 py-2 text-right">OVR</th><th class="px-3 py-2 move-button-cell">Ação</th></tr></thead><tbody class="team-${teamChar.toLowerCase()}-list-tbody">`;
@@ -817,11 +839,10 @@
                     tableHTML += '<tr><td colspan="4" class="px-3 py-2 text-center text-gray-400">Vazio</td></tr>';
                 } else {
                     sortPlayersForDisplay(teamPlayers).forEach(p => {
-                        const targetTeamChar = teamChar === 'A' ? 'B' : 'A';
                         tableHTML += `<tr>
                             <td class="px-3 py-2">${p.position}</td>
                             <td class="px-3 py-2 player-name-cell truncate" title="${p.name}">${getPositionIcon(p.position)} ${p.name}</td>
-                            <td class="px-3 py-2 text-right">${p.overall}</td>
+                            <td class="px-3 py-2 text-right">${Math.round(p.overall)}</td>
                             <td class="px-3 py-2 move-button-cell"><button class="btn-move-player" data-action="move-player" data-option-index="${index}" data-player-id="${p.id}" data-current-team="${teamChar}">Mover</button></td>
                         </tr>`;
                     });
@@ -829,14 +850,16 @@
                 tableHTML += '</tbody></table>';
                 return tableHTML;
             };
+            const teamAOverallDisplay = Math.round(division.teamA.reduce((s,p)=>s+p.overall,0));
+            const teamBOverallDisplay = Math.round(division.teamB.reduce((s,p)=>s+p.overall,0));
 
             card.innerHTML = `
                 <input type="radio" name="divisionOption" id="option${index}" value="${index}" class="hidden">
                 <label for="option${index}" class="block cursor-pointer">
                     <h3 class="text-xl font-semibold mb-3 text-gray-700">Opção ${index + 1}</h3>
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 text-base">
-                        <span class="font-medium mb-1 sm:mb-0">Time A (OVR: <span class="team-a-overall-value">${division.teamA.reduce((s,p)=>s+p.overall,0)}</span>)</span>
-                        <span class="font-medium">Time B (OVR: <span class="team-b-overall-value">${division.teamB.reduce((s,p)=>s+p.overall,0)}</span>)</span>
+                        <span class="font-medium mb-1 sm:mb-0">Time A (OVR: <span class="team-a-overall-value">${teamAOverallDisplay}</span>)</span>
+                        <span class="font-medium">Time B (OVR: <span class="team-b-overall-value">${teamBOverallDisplay}</span>)</span>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
@@ -851,16 +874,10 @@
                 </label>`;
             container.appendChild(card);
             
-            // O event listener para seleção do card (radio button) ainda é no label
             card.querySelector('label').addEventListener('click',(e) => {
-                // Impede que o clique no botão de mover também selecione o card
-                if (e.target.closest('button[data-action="move-player"]')) {
-                    return;
-                }
+                if (e.target.closest('button[data-action="move-player"]')) return;
                 document.querySelectorAll('#divisionOptionsContainer .option-card').forEach(c=>c.classList.remove('selected'));
-                card.classList.add('selected');
-                selectedDivisionIndex=index;
-                confirmDivisionBtn.disabled=false;
+                card.classList.add('selected');selectedDivisionIndex=index;confirmDivisionBtn.disabled=false;
             });
         }
 
@@ -869,26 +886,16 @@
             const cardElement = document.getElementById(`option-card-${optionIndex}`);
             if (!cardElement || !division) return;
 
-            cardElement.querySelector('.team-a-overall-value').textContent = division.teamA.reduce((s,p)=>s+p.overall,0);
-            cardElement.querySelector('.team-b-overall-value').textContent = division.teamB.reduce((s,p)=>s+p.overall,0);
+            cardElement.querySelector('.team-a-overall-value').textContent = Math.round(division.teamA.reduce((s,p)=>s+p.overall,0));
+            cardElement.querySelector('.team-b-overall-value').textContent = Math.round(division.teamB.reduce((s,p)=>s+p.overall,0));
 
             const generateTableRowsHTML = (teamPlayers, teamChar) => {
-                if (teamPlayers.length === 0) {
-                    return '<tr><td colspan="4" class="px-3 py-2 text-center text-gray-400">Vazio</td></tr>';
-                }
-                return sortPlayersForDisplay(teamPlayers).map(p => {
-                    return `<tr>
-                        <td class="px-3 py-2">${p.position}</td>
-                        <td class="px-3 py-2 player-name-cell truncate" title="${p.name}">${getPositionIcon(p.position)} ${p.name}</td>
-                        <td class="px-3 py-2 text-right">${p.overall}</td>
-                        <td class="px-3 py-2 move-button-cell"><button class="btn-move-player" data-action="move-player" data-option-index="${optionIndex}" data-player-id="${p.id}" data-current-team="${teamChar}">Mover</button></td>
-                    </tr>`;
-                }).join('');
+                if (teamPlayers.length === 0) return '<tr><td colspan="4" class="px-3 py-2 text-center text-gray-400">Vazio</td></tr>';
+                return sortPlayersForDisplay(teamPlayers).map(p => `<tr><td class="px-3 py-2">${p.position}</td><td class="px-3 py-2 player-name-cell truncate" title="${p.name}">${getPositionIcon(p.position)} ${p.name}</td><td class="px-3 py-2 text-right">${Math.round(p.overall)}</td><td class="px-3 py-2 move-button-cell"><button class="btn-move-player" data-action="move-player" data-option-index="${optionIndex}" data-player-id="${p.id}" data-current-team="${teamChar}">Mover</button></td></tr>`).join('');
             };
 
             const tbodyA = cardElement.querySelector('.team-a-list-tbody');
             if (tbodyA) tbodyA.innerHTML = generateTableRowsHTML(division.teamA, 'A');
-            
             const tbodyB = cardElement.querySelector('.team-b-list-tbody');
             if (tbodyB) tbodyB.innerHTML = generateTableRowsHTML(division.teamB, 'B');
         }
@@ -897,15 +904,13 @@
         window.movePlayerInOption = function(optionIndex, playerId, currentTeamChar) {
             const division = divisionOptions[optionIndex];
             if (!division) return;
-
             const currentTeamKey = currentTeamChar === 'A' ? 'teamA' : 'teamB';
             const targetTeamKey = currentTeamChar === 'A' ? 'teamB' : 'teamA';
-
             const playerIndex = division[currentTeamKey].findIndex(p => p.id === playerId);
             if (playerIndex > -1) {
                 const [playerToMove] = division[currentTeamKey].splice(playerIndex, 1);
                 division[targetTeamKey].push(playerToMove);
-                updateOptionCardDisplay(optionIndex); // Atualiza apenas o card modificado
+                updateOptionCardDisplay(optionIndex); 
             }
         }
         
@@ -1013,20 +1018,18 @@
             window.showPage(page2);
         });
 
-        // Adiciona event listener para mover jogadores nas opções de divisão
         divisionOptionsContainer.addEventListener('click', (event) => {
             const targetButton = event.target.closest('button[data-action="move-player"]');
             if (targetButton) {
                 const optionIndex = parseInt(targetButton.dataset.optionIndex);
                 const playerId = parseInt(targetButton.dataset.playerId);
-                const currentTeamChar = targetButton.dataset.currentTeam; // 'A' ou 'B'
-                
+                const currentTeamChar = targetButton.dataset.currentTeam; 
                 window.movePlayerInOption(optionIndex, playerId, currentTeamChar);
             }
         });
 
 
-        confirmDivisionBtn.addEventListener('click',()=>{if(selectedDivisionIndex===-1){showMessageBox('Selecione uma divisão.', 'error');return;}window.showPage(page3); colorsPageTitle.textContent = "Escolha as Cores dos Uniformes";});
+        confirmDivisionBtn.addEventListener('click',()=>{if(selectedDivisionIndex===-1){showMessageBox('Selecione uma divisão.', 'error');return;}window.showPage(page3); colorsPageTitle.textContent = "Escolha as Cores dos Uniformes"; backToEditMatchTeamsBtnPage3.classList.add('hidden'); document.getElementById('backToDivisionBtnPage3').classList.remove('hidden');});
         
         function prefillColorsForEdit(match) {
             selectedColors.teamA = match.teamA.color;
@@ -1118,6 +1121,7 @@
             if (editingMatchId) { 
                 const matchIndex = scheduledMatches.findIndex(m => m.id === editingMatchId);
                 if (matchIndex > -1) {
+                    // As equipes (jogadores) já foram salvas na page7, aqui só salvamos cores, data e hora
                     scheduledMatches[matchIndex].teamA.color = selectedColors.teamA;
                     scheduledMatches[matchIndex].teamB.color = selectedColors.teamB;
                     scheduledMatches[matchIndex].date = selectedDate;
@@ -1143,7 +1147,14 @@
             }
         });
 
-        function renderFinalTeams(teamA,teamB){const sA=sortPlayersForDisplay(teamA);const sB=sortPlayersForDisplay(teamB);finalTeamAList.innerHTML=sA.length===0?'<tr><td colspan="3" class="text-gray-500 text-center py-4">Vazio Time A</td></tr>':sA.map(p=>`<tr class="border-b border-gray-200 last:border-b-0"><td class="px-4 py-2">${p.position}</td><td class="px-4 py-2 truncate" title="${p.name}">${getPositionIcon(p.position)} ${p.name}</td><td class="px-4 py-2 text-right">${p.overall}</td></tr>`).join('');finalTeamBList.innerHTML=sB.length===0?'<tr><td colspan="3" class="text-gray-500 text-center py-4">Vazio Time B</td></tr>':sB.map(p=>`<tr class="border-b border-gray-200 last:border-b-0"><td class="px-4 py-2">${p.position}</td><td class="px-4 py-2 truncate" title="${p.name}">${getPositionIcon(p.position)} ${p.name}</td><td class="px-4 py-2 text-right">${p.overall}</td></tr>`).join('');finalTeamAOverallSpan.textContent=teamA.reduce((s,p)=>s+p.overall,0);finalTeamBOverallSpan.textContent=teamB.reduce((s,p)=>s+p.overall,0);}
+        function renderFinalTeams(teamA,teamB){
+            const sA=sortPlayersForDisplay(teamA);
+            const sB=sortPlayersForDisplay(teamB);
+            finalTeamAList.innerHTML=sA.length===0?'<tr><td colspan="3" class="text-gray-500 text-center py-4">Vazio Time A</td></tr>':sA.map(p=>`<tr class="border-b border-gray-200 last:border-b-0"><td class="px-4 py-2">${p.position}</td><td class="px-4 py-2 truncate" title="${p.name}">${getPositionIcon(p.position)} ${p.name}</td><td class="px-4 py-2 text-right">${Math.round(p.overall)}</td></tr>`).join('');
+            finalTeamBList.innerHTML=sB.length===0?'<tr><td colspan="3" class="text-gray-500 text-center py-4">Vazio Time B</td></tr>':sB.map(p=>`<tr class="border-b border-gray-200 last:border-b-0"><td class="px-4 py-2">${p.position}</td><td class="px-4 py-2 truncate" title="${p.name}">${getPositionIcon(p.position)} ${p.name}</td><td class="px-4 py-2 text-right">${Math.round(p.overall)}</td></tr>`).join('');
+            finalTeamAOverallSpan.textContent=Math.round(teamA.reduce((s,p)=>s+p.overall,0));
+            finalTeamBOverallSpan.textContent=Math.round(teamB.reduce((s,p)=>s+p.overall,0));
+        }
         
         function renderMatchItem(match, targetListDiv, isFinished = false) {
             const matchDiv = document.createElement('div');
@@ -1163,7 +1174,10 @@
                     <button class="btn-delete-match" onclick="window.deleteScheduledMatch(${match.id}, false)">Excluir</button>
                 `;
             } else {
-                 buttonsHtml = `<button class="btn-delete-match" onclick="window.deleteScheduledMatch(${match.id}, true)">Excluir Histórico</button>`;
+                 buttonsHtml = `
+                    <button class="btn-edit-finished-match" onclick="window.editFinishedMatch(${match.id})">Editar Placar/Stats</button>
+                    <button class="btn-delete-match" onclick="window.deleteScheduledMatch(${match.id}, true)">Excluir Histórico</button>
+                 `;
             }
             
             let scoreHtml = '';
@@ -1172,14 +1186,24 @@
             if (isFinished) {
                 scoreHtml = `<p class="font-bold text-lg mt-2">Placar Final: Time A ${match.scoreA} x ${match.scoreB} Time B</p>`;
                 
-                const buildPlayerStatsSummary = (playersWithStats) => {
-                    if (!playersWithStats || playersWithStats.length === 0) return '<tr><td colspan="2" class="text-center text-gray-400">Sem estatísticas</td></tr>';
-                    return playersWithStats.map(p => {
-                        if (!p.matchStats) return `<tr><td>${getPositionIcon(p.position)} ${p.name}</td><td>(sem stats)</td></tr>`; 
+                const buildPlayerStatsSummary = (playersInMatchTeam) => { 
+                    if (!playersInMatchTeam || playersInMatchTeam.length === 0) return '<tr><td colspan="3" class="text-center text-gray-400">Sem estatísticas</td></tr>';
+                    return playersInMatchTeam.map(p => {
+                        let overallChangeHtml = '';
+                        if (p.overallChangeForDisplay !== undefined && p.overallChangeForDisplay !== 0) {
+                            const change = p.overallChangeForDisplay;
+                            const absChange = Math.abs(change);
+                            const displayChange = (absChange % 1 === 0) ? absChange : absChange.toFixed(2); 
+                            const arrow = change > 0 ? '⬆️' : '⬇️';
+                            const colorClass = change > 0 ? 'text-green-500' : 'text-red-500';
+                            overallChangeHtml = `<span class="overall-change ${colorClass} ml-1">${arrow}${displayChange}</span>`;
+                        }
+                        
                         return `<tr>
                                     <td class="truncate" title="${p.name}">${getPositionIcon(p.position)} ${p.name}</td>
+                                    <td class="text-right">${Math.round(p.overallAfterMatchDisplay !== undefined ? p.overallAfterMatchDisplay : p.overall)} ${overallChangeHtml}</td>
                                     <td class="player-stats-summary">
-                                        G:${p.matchStats.gols || 0}, A:${p.matchStats.assistencias || 0}, D:${p.matchStats.defesas || 0}, GS:${p.matchStats.golsSofridos || 0}, GC:${p.matchStats.golsContra || 0}
+                                        G:${p.matchStats?.gols || 0}, A:${p.matchStats?.assistencias || 0}, D:${p.matchStats?.defesas || 0}, GS:${p.matchStats?.golsSofridos || 0}, GC:${p.matchStats?.golsContra || 0}
                                     </td>
                                 </tr>`;
                     }).join('');
@@ -1187,14 +1211,14 @@
                 statsSummaryHtml = `
                     <div class="teams-grid">
                         <div class="team-details">
-                            <h5 class="font-semibold mt-2">Time A - Estatísticas:</h5>
-                            <table class="w-full text-xs"><thead><tr><th>Jogador</th><th>Stats (G/A/D/GS/GC)</th></tr></thead>
+                            <h5 class="font-semibold mt-2">Time A - Performance:</h5>
+                            <table class="w-full text-xs"><thead><tr><th>Jogador</th><th class="text-right">OVR Final</th><th>Stats (G/A/D/GS/GC)</th></tr></thead>
                                 <tbody>${buildPlayerStatsSummary(match.teamA.players)}</tbody>
                             </table>
                         </div>
                         <div class="team-details">
-                            <h5 class="font-semibold mt-2">Time B - Estatísticas:</h5>
-                            <table class="w-full text-xs"><thead><tr><th>Jogador</th><th>Stats (G/A/D/GS/GC)</th></tr></thead>
+                            <h5 class="font-semibold mt-2">Time B - Performance:</h5>
+                            <table class="w-full text-xs"><thead><tr><th>Jogador</th><th class="text-right">OVR Final</th><th>Stats (G/A/D/GS/GC)</th></tr></thead>
                                 <tbody>${buildPlayerStatsSummary(match.teamB.players)}</tbody>
                             </table>
                         </div>
@@ -1206,7 +1230,7 @@
                 <div class="flex justify-between items-start mb-2">
                     <div>
                         <h4>Partida em ${formattedDate} às ${match.time}</h4>
-                        <p>Time A (Cor: ${match.teamA.color}, Overall: ${match.teamA.overall}) vs Time B (Cor: ${match.teamB.color}, Overall: ${match.teamB.overall})</p>
+                        <p>Time A (Cor: ${match.teamA.color}, Overall: ${Math.round(match.teamA.overall)}) vs Time B (Cor: ${match.teamB.color}, Overall: ${Math.round(match.teamB.overall)})</p>
                         ${scoreHtml}
                     </div>
                     <div class="flex-shrink-0">${buttonsHtml}</div>
@@ -1215,11 +1239,11 @@
                 <div class="teams-grid">
                     <div class="team-details">
                         <h5 class="font-semibold mt-2">Time A:</h5>
-                        <table class="w-full text-xs"><thead><tr><th>Pos</th><th>Nome</th><th class="text-right">OVR</th></tr></thead><tbody>${match.teamA.players.length>0?sortPlayersForDisplay(match.teamA.players).map(p=>`<tr><td>${p.position}</td><td class="truncate" title="${p.name}">${getPositionIcon(p.position)} ${p.name}</td><td class="text-right">${p.overall}</td></tr>`).join(''):'<tr><td colspan="3" class="text-center text-gray-400">Vazio</td></tr>'}</tbody></table>
+                        <table class="w-full text-xs"><thead><tr><th>Pos</th><th>Nome</th><th class="text-right">OVR</th></tr></thead><tbody>${match.teamA.players.length>0?sortPlayersForDisplay(match.teamA.players).map(p=>`<tr><td>${p.position}</td><td class="truncate" title="${p.name}">${getPositionIcon(p.position)} ${p.name}</td><td class="text-right">${Math.round(p.overall)}</td></tr>`).join(''):'<tr><td colspan="3" class="text-center text-gray-400">Vazio</td></tr>'}</tbody></table>
                     </div>
                     <div class="team-details">
                         <h5 class="font-semibold mt-2">Time B:</h5>
-                        <table class="w-full text-xs"><thead><tr><th>Pos</th><th>Nome</th><th class="text-right">OVR</th></tr></thead><tbody>${match.teamB.players.length>0?sortPlayersForDisplay(match.teamB.players).map(p=>`<tr><td>${p.position}</td><td class="truncate" title="${p.name}">${getPositionIcon(p.position)} ${p.name}</td><td class="text-right">${p.overall}</td></tr>`).join(''):'<tr><td colspan="3" class="text-center text-gray-400">Vazio</td></tr>'}</tbody></table>
+                        <table class="w-full text-xs"><thead><tr><th>Pos</th><th>Nome</th><th class="text-right">OVR</th></tr></thead><tbody>${match.teamB.players.length>0?sortPlayersForDisplay(match.teamB.players).map(p=>`<tr><td>${p.position}</td><td class="truncate" title="${p.name}">${getPositionIcon(p.position)} ${p.name}</td><td class="text-right">${Math.round(p.overall)}</td></tr>`).join(''):'<tr><td colspan="3" class="text-center text-gray-400">Vazio</td></tr>'}</tbody></table>
                     </div>
                 </div>`}
             `;
@@ -1273,26 +1297,147 @@
                 const matchToEdit = scheduledMatches.find(m => m.id === matchId);
                 if (matchToEdit) {
                     editingMatchId = matchId; 
-                    selectedColors.teamA = matchToEdit.teamA.color;
-                    selectedColors.teamB = matchToEdit.teamB.color;
-                    selectedDate = matchToEdit.date; 
-                    selectedTime = matchToEdit.time; 
-                    
-                    colorsPageTitle.textContent = "Editar Cores da Partida";
-                    prefillColorsForEdit(matchToEdit); 
-                    window.showPage(page3);
+                    isEditingFinishedGameMode = false; // Garante que não está no modo de edição de jogo finalizado
+                    renderEditMatchTeamsPage(matchToEdit);
+                    window.showPage(page7_edit_match_teams);
                 }
             } catch (error) {
                 console.error("Erro em editScheduledMatch:", error);
-                showMessageBox(`Erro ao tentar editar partida: ${error.message}`, "error");
+                showMessageBox(`Erro ao tentar editar partida agendada: ${error.message}`, "error");
             }
         }
 
-        window.promptFinalizeMatch = function(matchId) {
+        function renderEditMatchTeamsPage(match) {
+            editMatchTeamAListContainer.innerHTML = '';
+            editMatchTeamBListContainer.innerHTML = '';
+
+            const generateTeamTableHTML = (teamPlayers, teamChar) => {
+                let tableHTML = `<table class="w-full text-left"><thead><tr class="bg-gray-50"><th class="px-3 py-2">Pos</th><th class="px-3 py-2 player-name-cell">Nome</th><th class="px-3 py-2 text-right">OVR</th><th class="px-3 py-2 move-button-cell">Ação</th></tr></thead><tbody>`;
+                if (teamPlayers.length === 0) {
+                    tableHTML += '<tr><td colspan="4" class="px-3 py-2 text-center text-gray-400">Vazio</td></tr>';
+                } else {
+                    sortPlayersForDisplay(teamPlayers).forEach(p => {
+                        tableHTML += `<tr>
+                            <td class="px-3 py-2">${p.position}</td>
+                            <td class="px-3 py-2 player-name-cell truncate" title="${p.name}">${getPositionIcon(p.position)} ${p.name}</td>
+                            <td class="px-3 py-2 text-right">${Math.round(p.overall)}</td>
+                            <td class="px-3 py-2 move-button-cell"><button class="btn-move-player" onclick="window.movePlayerInEditingMatch(${p.id}, '${teamChar}')">Mover</button></td>
+                        </tr>`;
+                    });
+                }
+                tableHTML += '</tbody></table>';
+                return tableHTML;
+            };
+
+            editMatchTeamAListContainer.innerHTML = generateTeamTableHTML(match.teamA.players, 'A');
+            editMatchTeamBListContainer.innerHTML = generateTeamTableHTML(match.teamB.players, 'B');
+            editMatchTeamAOverallSpan.textContent = Math.round(match.teamA.players.reduce((s,p)=>s+p.overall,0));
+            editMatchTeamBOverallSpan.textContent = Math.round(match.teamB.players.reduce((s,p)=>s+p.overall,0));
+        }
+
+        window.movePlayerInEditingMatch = function(playerId, currentTeamChar) {
+            if (!editingMatchId) return;
+            const match = scheduledMatches.find(m => m.id === editingMatchId); // Assume que estamos editando uma partida agendada
+            if (!match) return;
+
+            const sourceTeamKey = currentTeamChar === 'A' ? 'teamA' : 'teamB';
+            const targetTeamKey = currentTeamChar === 'A' ? 'teamB' : 'teamA';
+            
+            const playerIndex = match[sourceTeamKey].players.findIndex(p => p.id === playerId);
+            if (playerIndex > -1) {
+                const [playerToMove] = match[sourceTeamKey].players.splice(playerIndex, 1);
+                match[targetTeamKey].players.push(playerToMove);
+                
+                match.teamA.overall = match.teamA.players.reduce((s,p)=>s+p.overall,0);
+                match.teamB.overall = match.teamB.players.reduce((s,p)=>s+p.overall,0);
+
+                renderEditMatchTeamsPage(match); 
+            }
+        }
+
+        cancelEditMatchTeamsBtn.addEventListener('click', () => {
+            editingMatchId = null; 
+            window.showPage(page1); 
+            renderScheduledMatches(); 
+        });
+
+        saveMatchTeamsAndGoToColorsBtn.addEventListener('click', () => {
+            if (!editingMatchId) return;
+            const match = scheduledMatches.find(m => m.id === editingMatchId);
+            if (match) {
+                saveScheduledMatchesToLocalStorage(); 
+                
+                selectedColors.teamA = match.teamA.color;
+                selectedColors.teamB = match.teamB.color;
+                selectedDate = match.date;
+                selectedTime = match.time;
+
+                colorsPageTitle.textContent = "Editar Cores da Partida";
+                prefillColorsForEdit(match);
+                document.getElementById('backToDivisionBtnPage3').classList.add('hidden'); 
+                backToEditMatchTeamsBtnPage3.classList.remove('hidden'); 
+                window.showPage(page3);
+            }
+        });
+
+        // NOVA FUNÇÃO: Editar Partida Finalizada
+        window.editFinishedMatch = function(matchId) {
+            try {
+                const matchToEdit = finishedMatches.find(m => m.id === matchId);
+                if (matchToEdit) {
+                    finalizingMatchId = matchId; // Usamos finalizingMatchId para indicar qual partida está sendo editada/finalizada
+                    isEditingFinishedGameMode = true; // Indica que estamos editando uma partida já finalizada
+                    
+                    finalizePageTitle.textContent = "Editar Placar e Estatísticas da Partida";
+                    scoreTeamAInput.value = matchToEdit.scoreA;
+                    scoreTeamBInput.value = matchToEdit.scoreB;
+                    scoreErrorP.classList.add('hidden');
+                    statsErrorP.classList.add('hidden');
+                    statsTeamAContainer.innerHTML = '';
+                    statsTeamBContainer.innerHTML = '';
+
+                    const createStatInputRow = (player, existingStats = {}) => {
+                        const playerRow = document.createElement('div');
+                        playerRow.className = 'stats-player-item py-2';
+                        playerRow.innerHTML = `
+                            <div>
+                                <span class="stats-player-name">${getPositionIcon(player.position)} ${player.name} (OVR: ${Math.round(player.overall)})</span>
+                                <div class="stats-input-group mt-1">
+                                    <label for="stat-gols-${player.id}" class="text-xs">G:</label>
+                                    <input type="number" id="stat-gols-${player.id}" data-player-id="${player.id}" data-stat="gols" value="${existingStats.gols || 0}" min="0" class="stat-input">
+                                    <label for="stat-assistencias-${player.id}" class="text-xs ml-2">A:</label>
+                                    <input type="number" id="stat-assistencias-${player.id}" data-player-id="${player.id}" data-stat="assistencias" value="${existingStats.assistencias || 0}" min="0" class="stat-input">
+                                    <label for="stat-defesas-${player.id}" class="text-xs ml-2">D:</label>
+                                    <input type="number" id="stat-defesas-${player.id}" data-player-id="${player.id}" data-stat="defesas" value="${existingStats.defesas || 0}" min="0" class="stat-input">
+                                    <label for="stat-golsSofridos-${player.id}" class="text-xs ml-2">GS:</label>
+                                    <input type="number" id="stat-golsSofridos-${player.id}" data-player-id="${player.id}" data-stat="golsSofridos" value="${existingStats.golsSofridos || 0}" min="0" class="stat-input">
+                                    <label for="stat-golsContra-${player.id}" class="text-xs ml-2">GC:</label>
+                                    <input type="number" id="stat-golsContra-${player.id}" data-player-id="${player.id}" data-stat="golsContra" value="${existingStats.golsContra || 0}" min="0" class="stat-input">
+                                </div>
+                            </div>
+                        `;
+                        return playerRow;
+                    };
+
+                    matchToEdit.teamA.players.forEach(player => statsTeamAContainer.appendChild(createStatInputRow(player, player.matchStats)));
+                    matchToEdit.teamB.players.forEach(player => statsTeamBContainer.appendChild(createStatInputRow(player, player.matchStats)));
+                    
+                    window.showPage(page6);
+                }
+            } catch (error) {
+                console.error("Erro em editFinishedMatch:", error);
+                showMessageBox(`Erro ao tentar editar partida finalizada: ${error.message}`, "error");
+            }
+        }
+
+
+        window.promptFinalizeMatch = function(matchId) { // Para finalizar uma partida agendada
             try {
                 finalizingMatchId = matchId;
+                isEditingFinishedGameMode = false; // Não estamos editando uma finalizada, mas sim finalizando uma agendada
                 const match = scheduledMatches.find(m => m.id === matchId);
                 if (match) {
+                    finalizePageTitle.textContent = "Finalizar Partida e Registrar Placar";
                     statsTeamAContainer.innerHTML = ''; 
                     statsTeamBContainer.innerHTML = '';
                     scoreTeamAInput.value = ''; scoreTeamBInput.value = '';
@@ -1303,7 +1448,7 @@
                         playerRow.className = 'stats-player-item py-2';
                         playerRow.innerHTML = `
                             <div>
-                                <span class="stats-player-name">${getPositionIcon(player.position)} ${player.name} (OVR: ${player.overall})</span>
+                                <span class="stats-player-name">${getPositionIcon(player.position)} ${player.name} (OVR: ${Math.round(player.overall)})</span>
                                 <div class="stats-input-group mt-1">
                                     <label for="stat-gols-${player.id}" class="text-xs">G:</label>
                                     <input type="number" id="stat-gols-${player.id}" data-player-id="${player.id}" data-stat="gols" value="0" min="0" class="stat-input">
@@ -1332,54 +1477,38 @@
 
         cancelFinalizeBtn.addEventListener('click', () => {
             finalizingMatchId = null;
+            isEditingFinishedGameMode = false;
             window.showPage(page1);
         });
         
-        // LÓGICA DE PROGRESSÃO DE OVERALL ATUALIZADA (v6.3)
         function calculateOverallChange(player, stats, matchResult) { 
             let overallChange = 0;
-            const currentOverall = player.overall;
-
-            // Gols Marcados
             if (stats.gols > 0) {
                 if (player.position === 'ATA') overallChange += stats.gols * 0.25;
                 else if (player.position === 'MEI') overallChange += stats.gols * 0.5;
                 else if (player.position === 'ZAG') overallChange += stats.gols * 0.5; 
                 else if (player.position === 'GO') overallChange += stats.gols * 0.75;
             }
-            // Assistências
             if (stats.assistencias > 0) {
                 if (player.position === 'ATA') overallChange += stats.assistencias * 0.5; 
                 else if (player.position === 'MEI') overallChange += stats.assistencias * 0.25;
                 else if (player.position === 'ZAG') overallChange += stats.assistencias * 0.5;
                 else if (player.position === 'GO') overallChange += stats.assistencias * 0.5; 
             }
-            // Defesas
             if (stats.defesas > 0) {
                 if (player.position === 'GO') overallChange += stats.defesas * 0.1;
                 else overallChange += stats.defesas * 0.5; 
             }
-            // Gols Sofridos
             if (stats.golsSofridos > 0) {
                 if (player.position === 'GO') overallChange -= stats.golsSofridos * 0.3; 
                 else overallChange -= stats.golsSofridos * 0.25; 
             }
-            // Gols Contra
             if (stats.golsContra > 0) {
                 overallChange -= stats.golsContra * 0.75;
             }
-
-            // Bônus/Penalidade por resultado
             if (matchResult === 'win') overallChange += 0.25; 
             else if (matchResult === 'loss') overallChange -= 0.5;
-
-            let newOverallCalculated = currentOverall + overallChange;
-            let newOverall = Math.round(newOverallCalculated);
-
-            if (newOverall > 100) newOverall = 100;
-            if (newOverall < 50) newOverall = 50;
-            
-            return newOverall - currentOverall; 
+            return overallChange; 
         }
 
 
@@ -1389,81 +1518,114 @@
                 const finalScoreB = parseInt(scoreTeamBInput.value);
 
                 if (isNaN(finalScoreA) || finalScoreA < 0 || isNaN(finalScoreB) || finalScoreB < 0) {
-                    scoreErrorP.classList.remove('hidden');
+                    scoreErrorP.classList.remove('hidden'); return;
+                }
+                scoreErrorP.classList.add('hidden'); statsErrorP.classList.add('hidden'); 
+
+                let matchData;
+                let matchIndex;
+                let sourceList; // 'scheduledMatches' ou 'finishedMatches'
+
+                if (isEditingFinishedGameMode) {
+                    matchIndex = finishedMatches.findIndex(m => m.id === finalizingMatchId);
+                    if (matchIndex > -1) {
+                        matchData = finishedMatches[matchIndex];
+                        sourceList = 'finishedMatches';
+                    }
+                } else {
+                    matchIndex = scheduledMatches.findIndex(m => m.id === finalizingMatchId);
+                    if (matchIndex > -1) {
+                        matchData = scheduledMatches[matchIndex];
+                        sourceList = 'scheduledMatches';
+                    }
+                }
+
+                if (!matchData) {
+                    showMessageBox("Erro: Partida não encontrada para finalizar/editar.", "error");
                     return;
                 }
-                scoreErrorP.classList.add('hidden');
-                statsErrorP.classList.add('hidden'); 
-
-                const matchIndex = scheduledMatches.findIndex(m => m.id === finalizingMatchId);
-                if (matchIndex > -1) {
-                    const matchToFinalize = scheduledMatches[matchIndex];
-                    let allStatsValid = true;
-                    
-                    const collectedStats = { teamA: [], teamB: [] };
-                    
-                    const processTeamStats = (teamKey, teamContainerId) => {
-                        matchToFinalize[teamKey].players.forEach(pInMatch => {
-                            const playerStats = { gols: 0, assistencias: 0, defesas: 0, golsSofridos: 0, golsContra: 0 };
-                            document.querySelectorAll(`#${teamContainerId} input[data-player-id="${pInMatch.id}"]`).forEach(input => {
-                                const statValue = parseInt(input.value);
-                                if (isNaN(statValue) || statValue < 0) allStatsValid = false;
-                                playerStats[input.dataset.stat] = statValue;
-                            });
-                            collectedStats[teamKey].push({ playerId: pInMatch.id, stats: playerStats, originalPosition: pInMatch.position });
+                
+                let allStatsValid = true;
+                const collectedStats = { teamA: [], teamB: [] };
+                
+                const processTeamStats = (teamKey, teamContainerId) => {
+                    matchData[teamKey].players.forEach(pInMatch => {
+                        const playerStats = { gols: 0, assistencias: 0, defesas: 0, golsSofridos: 0, golsContra: 0 };
+                        document.querySelectorAll(`#${teamContainerId} input[data-player-id="${pInMatch.id}"]`).forEach(input => {
+                            const statValue = parseInt(input.value);
+                            if (isNaN(statValue) || statValue < 0) allStatsValid = false;
+                            playerStats[input.dataset.stat] = statValue;
                         });
-                    };
-
-                    processTeamStats('teamA', 'statsTeamAContainer');
-                    processTeamStats('teamB', 'statsTeamBContainer');
-
-                    if (!allStatsValid) {
-                        statsErrorP.classList.remove('hidden');
-                        return;
-                    }
-                    
-                    const finalizedMatchData = scheduledMatches.splice(matchIndex, 1)[0]; 
-                    finalizedMatchData.scoreA = finalScoreA; // Usa o placar digitado
-                    finalizedMatchData.scoreB = finalScoreB; // Usa o placar digitado
-                    finalizedMatchData.finalizedAt = new Date().toISOString();
-                    
-                    finalizedMatchData.teamA.players.forEach(p => p.matchStats = {});
-                    finalizedMatchData.teamB.players.forEach(p => p.matchStats = {});
-
-                    const resultTeamA = finalScoreA > finalScoreB ? 'win' : (finalScoreA < finalScoreB ? 'loss' : 'draw');
-                    const resultTeamB = finalScoreB > finalScoreA ? 'win' : (finalScoreB < finalScoreA ? 'loss' : 'draw');
-
-                    collectedStats.teamA.forEach(pStat => {
-                        const playerGlobal = players.find(pl => pl.id === pStat.playerId);
-                        if (playerGlobal) {
-                            const overallChange = calculateOverallChange(playerGlobal, pStat.stats, resultTeamA);
-                            playerGlobal.overall = Math.min(100, Math.max(50, Math.round(playerGlobal.overall + overallChange)));
-                            const teamPlayer = finalizedMatchData.teamA.players.find(p => p.id === pStat.playerId);
-                            if(teamPlayer) teamPlayer.matchStats = pStat.stats; 
-                        }
+                        collectedStats[teamKey].push({ playerId: pInMatch.id, stats: playerStats });
                     });
-                     collectedStats.teamB.forEach(pStat => {
-                        const playerGlobal = players.find(pl => pl.id === pStat.playerId);
-                        if (playerGlobal) {
-                            const overallChange = calculateOverallChange(playerGlobal, pStat.stats, resultTeamB);
-                            playerGlobal.overall = Math.min(100, Math.max(50, Math.round(playerGlobal.overall + overallChange)));
-                            const teamPlayer = finalizedMatchData.teamB.players.find(p => p.id === pStat.playerId);
-                            if(teamPlayer) teamPlayer.matchStats = pStat.stats;
-                        }
-                    });
-                    
-                    finishedMatches.push(finalizedMatchData);
+                };
 
-                    savePlayersToLocalStorage();
-                    saveScheduledMatchesToLocalStorage();
-                    saveFinishedMatchesToLocalStorage();
-                    renderPlayerList(); 
-                    renderScheduledMatches();
-                    renderFinishedMatches();
-                    showMessageBox('Placar e estatísticas salvos! Overall atualizado.', 'success');
-                    finalizingMatchId = null;
-                    window.showPage(page1);
+                processTeamStats('teamA', 'statsTeamAContainer');
+                processTeamStats('teamB', 'statsTeamBContainer');
+
+                if (!allStatsValid) {
+                    statsErrorP.classList.remove('hidden'); return;
                 }
+                
+                // Atualiza placar e dados da partida
+                matchData.scoreA = finalScoreA; 
+                matchData.scoreB = finalScoreB; 
+                matchData.finalizedAt = new Date().toISOString();
+                
+                const resultTeamA = finalScoreA > finalScoreB ? 'win' : (finalScoreA < finalScoreB ? 'loss' : 'draw');
+                const resultTeamB = finalScoreB > finalScoreA ? 'win' : (finalScoreB < finalScoreA ? 'loss' : 'draw');
+
+                const applyOverallUpdates = (teamCollectedStats, teamResult, teamInMatchData) => {
+                    teamCollectedStats.forEach(pStat => {
+                        const playerGlobal = players.find(pl => pl.id === pStat.playerId);
+                        const playerInMatch = teamInMatchData.players.find(p => p.id === pStat.playerId);
+
+                        if (playerGlobal && playerInMatch) {
+                            // Para edição de partida finalizada, reverter a mudança anterior antes de aplicar a nova
+                            let overallBaseForCalc = playerGlobal.overall;
+                            if (isEditingFinishedGameMode && playerInMatch.overallChangeForDisplay !== undefined) {
+                                overallBaseForCalc = playerGlobal.overall - playerInMatch.overallChangeForDisplay;
+                            } else if (!isEditingFinishedGameMode) {
+                                // Se está finalizando pela primeira vez, o overall base é o atual do jogador global
+                                playerInMatch.overallBeforeMatchDisplay = playerGlobal.overall;
+                            }
+                            // Se overallBeforeMatchDisplay já existe (de uma finalização anterior), use-o
+                            overallBaseForCalc = playerInMatch.overallBeforeMatchDisplay !== undefined ? playerInMatch.overallBeforeMatchDisplay : overallBaseForCalc;
+
+
+                            const overallChange = calculateOverallChange({ ...playerGlobal, overall: overallBaseForCalc }, pStat.stats, teamResult);
+                            
+                            playerGlobal.overall = overallBaseForCalc + overallChange;
+                            if (playerGlobal.overall > 100) playerGlobal.overall = 100;
+                            if (playerGlobal.overall < 50) playerGlobal.overall = 50;
+
+                            playerInMatch.matchStats = pStat.stats; 
+                            playerInMatch.overallAfterMatchDisplay = playerGlobal.overall; 
+                            playerInMatch.overallChangeForDisplay = playerGlobal.overall - overallBaseForCalc; 
+                        }
+                    });
+                };
+                
+                applyOverallUpdates(collectedStats.teamA, resultTeamA, matchData.teamA);
+                applyOverallUpdates(collectedStats.teamB, resultTeamB, matchData.teamB);
+                
+                if (!isEditingFinishedGameMode) { // Se estava finalizando uma partida agendada
+                    scheduledMatches.splice(matchIndex, 1); // Remove da lista de agendadas
+                    finishedMatches.push(matchData); // Adiciona à lista de finalizadas
+                }
+                // Se estava editando uma finalizada, matchData já é uma referência ao objeto em finishedMatches, então as alterações são diretas.
+
+                savePlayersToLocalStorage();
+                saveScheduledMatchesToLocalStorage();
+                saveFinishedMatchesToLocalStorage();
+                renderPlayerList(); 
+                renderScheduledMatches();
+                renderFinishedMatches();
+                showMessageBox(isEditingFinishedGameMode ? 'Partida finalizada editada com sucesso!' : 'Placar e estatísticas salvos! Overall atualizado.', 'success');
+                finalizingMatchId = null;
+                isEditingFinishedGameMode = false;
+                window.showPage(page1);
+                
             } catch (error) {
                 console.error("Erro em saveScoreBtn:", error);
                 showMessageBox(`Erro ao salvar placar: ${error.message}`, "error");
@@ -1473,7 +1635,30 @@
 
         // --- Inicialização ---
         document.getElementById('backToPlayersBtnPage2').addEventListener('click', () => window.showPage(page1));
-        document.getElementById('backToDivisionBtnPage3').addEventListener('click', () => { editingMatchId = null; window.showPage(page2); }); 
+        document.getElementById('backToDivisionBtnPage3').addEventListener('click', () => { 
+            if (editingMatchId) { 
+                const match = scheduledMatches.find(m => m.id === editingMatchId) || finishedMatches.find(m => m.id === editingMatchId) ; 
+                if (match) {
+                    renderEditMatchTeamsPage(match); 
+                    window.showPage(page7_edit_match_teams);
+                } else { 
+                    editingMatchId = null;
+                    window.showPage(page1);
+                }
+            } else { 
+                window.showPage(page2);
+            }
+        }); 
+        backToEditMatchTeamsBtnPage3.addEventListener('click', () => {
+            if (editingMatchId) {
+                const match = scheduledMatches.find(m => m.id === editingMatchId);
+                if (match) renderEditMatchTeamsPage(match);
+                window.showPage(page7_edit_match_teams);
+            } else {
+                window.showPage(page1); // Fallback
+            }
+        });
+
         document.getElementById('backToColorsBtnPage4').addEventListener('click', () => {
             if (editingMatchId) { 
                 const match = scheduledMatches.find(m => m.id === editingMatchId);
