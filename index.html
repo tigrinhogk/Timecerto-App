@@ -335,7 +335,7 @@
         .stats-input-group label {
             font-size: 0.75rem; /* text-xs */
             color: #4b5563; /* text-gray-600 */
-            min-width: 20px; /* Para alinhar os inputs */
+            min-width: 25px; /* Para alinhar os inputs (G, A, D, GS, GC, DS) */
             text-align: right;
         }
 
@@ -525,6 +525,26 @@
                     </div>
                      <p id="scoreError" class="error-message hidden text-center mt-2">Insira um placar válido.</p>
                 </div>
+                
+                <!-- Destaques da Partida -->
+                <div class="my-6">
+                    <h3 class="text-xl font-medium text-gray-700 mb-3 border-b pb-2">Destaques da Partida:</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                             <label for="mvpSelect" class="block text-sm font-medium text-gray-700 mb-1">🏆 MVP (Melhor Jogador):</label>
+                             <select id="mvpSelect" class="w-full"></select>
+                        </div>
+                         <div>
+                             <label for="bolaMurchaSelect" class="block text-sm font-medium text-gray-700 mb-1">🐟 Bola Murcha:</label>
+                             <select id="bolaMurchaSelect" class="w-full"></select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legenda das Estatísticas -->
+                <div class="my-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-700">
+                    <strong>Legenda:</strong> G = Gols, A = Assistências, DS = Desarmes, D = Defesas, GS = Gols Sofridos, GC = Gol Contra
+                </div>
 
                 <div class="mt-8 space-y-6"> 
                     <div>
@@ -586,7 +606,7 @@
         let editingPlayerId = null; 
         let editingMatchId = null; 
         let finalizingMatchId = null; 
-        let isEditingFinishedGameMode = false; // Nova flag
+        let isEditingFinishedGameMode = false; 
         let messageTimeout = null; 
 
         // Referências aos elementos do DOM
@@ -651,6 +671,8 @@
         const statsErrorP = document.getElementById('statsError');
         const cancelFinalizeBtn = document.getElementById('cancelFinalizeBtn');
         const saveScoreBtn = document.getElementById('saveScoreBtn');
+        const mvpSelect = document.getElementById('mvpSelect');
+        const bolaMurchaSelect = document.getElementById('bolaMurchaSelect');
 
         // Elementos da Page 7 (Edit Match Teams)
         const editMatchTeamAListContainer = document.getElementById('editMatchTeamAListContainer');
@@ -661,21 +683,48 @@
         const saveMatchTeamsAndGoToColorsBtn = document.getElementById('saveMatchTeamsAndGoToColorsBtn');
 
 
-        // --- Funções de localStorage ---
-        function savePlayersToLocalStorage() { localStorage.setItem('soccerTeamDividerPlayers', JSON.stringify(players)); }
+        // --- Funções de localStorage com console.log para debug ---
+        function savePlayersToLocalStorage() {
+            // console.log("Salvando jogadores no localStorage:", JSON.stringify(players));
+            localStorage.setItem('soccerTeamDividerPlayers', JSON.stringify(players));
+        }
         function loadPlayersFromLocalStorage() {
+            // console.log("Carregando jogadores do localStorage...");
             const stored = localStorage.getItem('soccerTeamDividerPlayers');
-            if (stored) players = JSON.parse(stored).map(player => ({...player, isPlayingThisWeek: player.isPlayingThisWeek === undefined ? true : player.isPlayingThisWeek }));
+            if (stored) {
+                players = JSON.parse(stored).map(player => ({...player, isPlayingThisWeek: player.isPlayingThisWeek === undefined ? true : player.isPlayingThisWeek }));
+                // console.log("Jogadores carregados:", players);
+            } else {
+                // console.log("Nenhum jogador encontrado no localStorage.");
+            }
         }
-        function saveScheduledMatchesToLocalStorage() { localStorage.setItem('soccerTeamDividerMatches', JSON.stringify(scheduledMatches)); }
+        function saveScheduledMatchesToLocalStorage() {
+            // console.log("Salvando partidas agendadas no localStorage:", JSON.stringify(scheduledMatches));
+            localStorage.setItem('soccerTeamDividerMatches', JSON.stringify(scheduledMatches));
+        }
         function loadScheduledMatchesFromLocalStorage() {
+            // console.log("Carregando partidas agendadas do localStorage...");
             const stored = localStorage.getItem('soccerTeamDividerMatches');
-            if (stored) scheduledMatches = JSON.parse(stored);
+            if (stored) {
+                scheduledMatches = JSON.parse(stored);
+                // console.log("Partidas agendadas carregadas:", scheduledMatches);
+            } else {
+                // console.log("Nenhuma partida agendada encontrada no localStorage.");
+            }
         }
-        function saveFinishedMatchesToLocalStorage() { localStorage.setItem('soccerTeamDividerFinishedMatches', JSON.stringify(finishedMatches));}
+        function saveFinishedMatchesToLocalStorage() {
+            // console.log("Salvando partidas finalizadas no localStorage:", JSON.stringify(finishedMatches));
+            localStorage.setItem('soccerTeamDividerFinishedMatches', JSON.stringify(finishedMatches));
+        }
         function loadFinishedMatchesFromLocalStorage() {
+            // console.log("Carregando partidas finalizadas do localStorage...");
             const stored = localStorage.getItem('soccerTeamDividerFinishedMatches');
-            if (stored) finishedMatches = JSON.parse(stored);
+            if (stored) {
+                finishedMatches = JSON.parse(stored);
+                // console.log("Partidas finalizadas carregadas:", finishedMatches);
+            } else {
+                // console.log("Nenhuma partida finalizada encontrada no localStorage.");
+            }
         }
 
         window.showPage = function(pageToShow) {
@@ -699,7 +748,7 @@
             selectedColors = { teamA: null, teamB: null };
             selectedDate = null; selectedTime = null;
             editingMatchId = null; finalizingMatchId = null; 
-            isEditingFinishedGameMode = false; // Reseta a flag
+            isEditingFinishedGameMode = false; 
 
             players.forEach(player => player.isPlayingThisWeek = false); 
             savePlayersToLocalStorage(); 
@@ -1121,7 +1170,6 @@
             if (editingMatchId) { 
                 const matchIndex = scheduledMatches.findIndex(m => m.id === editingMatchId);
                 if (matchIndex > -1) {
-                    // As equipes (jogadores) já foram salvas na page7, aqui só salvamos cores, data e hora
                     scheduledMatches[matchIndex].teamA.color = selectedColors.teamA;
                     scheduledMatches[matchIndex].teamB.color = selectedColors.teamB;
                     scheduledMatches[matchIndex].date = selectedDate;
@@ -1156,6 +1204,11 @@
             finalTeamBOverallSpan.textContent=Math.round(teamB.reduce((s,p)=>s+p.overall,0));
         }
         
+        // MODIFICAÇÃO: Constantes do Google Forms removidas daqui
+        
+        // window.openVoteForm = function(matchId) { ... } // FUNÇÃO REMOVIDA
+
+
         function renderMatchItem(match, targetListDiv, isFinished = false) {
             const matchDiv = document.createElement('div');
             matchDiv.className = 'match-item'; 
@@ -1182,10 +1235,18 @@
             
             let scoreHtml = '';
             let statsSummaryHtml = ''; 
+            let highlightsHtml = '';
 
             if (isFinished) {
                 scoreHtml = `<p class="font-bold text-lg mt-2">Placar Final: Time A ${match.scoreA} x ${match.scoreB} Time B</p>`;
                 
+                if (match.mvpName || match.bolaMurchaName) {
+                     highlightsHtml = `<div class="text-xs text-gray-600 mt-2">
+                        ${match.mvpName ? `<span class="mr-4">🏆 MVP: <strong>${match.mvpName}</strong></span>` : ''}
+                        ${match.bolaMurchaName ? `<span>🐟 Bola Murcha: <strong>${match.bolaMurchaName}</strong></span>` : ''}
+                     </div>`;
+                }
+
                 const buildPlayerStatsSummary = (playersInMatchTeam) => { 
                     if (!playersInMatchTeam || playersInMatchTeam.length === 0) return '<tr><td colspan="3" class="text-center text-gray-400">Sem estatísticas</td></tr>';
                     return playersInMatchTeam.map(p => {
@@ -1203,7 +1264,7 @@
                                     <td class="truncate" title="${p.name}">${getPositionIcon(p.position)} ${p.name}</td>
                                     <td class="text-right">${Math.round(p.overallAfterMatchDisplay !== undefined ? p.overallAfterMatchDisplay : p.overall)} ${overallChangeHtml}</td>
                                     <td class="player-stats-summary">
-                                        G:${p.matchStats?.gols || 0}, A:${p.matchStats?.assistencias || 0}, D:${p.matchStats?.defesas || 0}, GS:${p.matchStats?.golsSofridos || 0}, GC:${p.matchStats?.golsContra || 0}
+                                        G:${p.matchStats?.gols || 0}, A:${p.matchStats?.assistencias || 0}, DS:${p.matchStats?.desarmes || 0}, D:${p.matchStats?.defesas || 0}, GS:${p.matchStats?.golsSofridos || 0}, GC:${p.matchStats?.golsContra || 0}
                                     </td>
                                 </tr>`;
                     }).join('');
@@ -1212,13 +1273,13 @@
                     <div class="teams-grid">
                         <div class="team-details">
                             <h5 class="font-semibold mt-2">Time A - Performance:</h5>
-                            <table class="w-full text-xs"><thead><tr><th>Jogador</th><th class="text-right">OVR Final</th><th>Stats (G/A/D/GS/GC)</th></tr></thead>
+                            <table class="w-full text-xs"><thead><tr><th>Jogador</th><th class="text-right">OVR Final</th><th>Stats (G/A/DS/D/GS/GC)</th></tr></thead>
                                 <tbody>${buildPlayerStatsSummary(match.teamA.players)}</tbody>
                             </table>
                         </div>
                         <div class="team-details">
                             <h5 class="font-semibold mt-2">Time B - Performance:</h5>
-                            <table class="w-full text-xs"><thead><tr><th>Jogador</th><th class="text-right">OVR Final</th><th>Stats (G/A/D/GS/GC)</th></tr></thead>
+                            <table class="w-full text-xs"><thead><tr><th>Jogador</th><th class="text-right">OVR Final</th><th>Stats (G/A/DS/D/GS/GC)</th></tr></thead>
                                 <tbody>${buildPlayerStatsSummary(match.teamB.players)}</tbody>
                             </table>
                         </div>
@@ -1232,6 +1293,7 @@
                         <h4>Partida em ${formattedDate} às ${match.time}</h4>
                         <p>Time A (Cor: ${match.teamA.color}, Overall: ${Math.round(match.teamA.overall)}) vs Time B (Cor: ${match.teamB.color}, Overall: ${Math.round(match.teamB.overall)})</p>
                         ${scoreHtml}
+                        ${highlightsHtml}
                     </div>
                     <div class="flex-shrink-0">${buttonsHtml}</div>
                 </div>
@@ -1297,7 +1359,7 @@
                 const matchToEdit = scheduledMatches.find(m => m.id === matchId);
                 if (matchToEdit) {
                     editingMatchId = matchId; 
-                    isEditingFinishedGameMode = false; // Garante que não está no modo de edição de jogo finalizado
+                    isEditingFinishedGameMode = false; 
                     renderEditMatchTeamsPage(matchToEdit);
                     window.showPage(page7_edit_match_teams);
                 }
@@ -1337,7 +1399,7 @@
 
         window.movePlayerInEditingMatch = function(playerId, currentTeamChar) {
             if (!editingMatchId) return;
-            const match = scheduledMatches.find(m => m.id === editingMatchId); // Assume que estamos editando uma partida agendada
+            const match = scheduledMatches.find(m => m.id === editingMatchId); 
             if (!match) return;
 
             const sourceTeamKey = currentTeamChar === 'A' ? 'teamA' : 'teamB';
@@ -1380,48 +1442,52 @@
             }
         });
 
-        // NOVA FUNÇÃO: Editar Partida Finalizada
         window.editFinishedMatch = function(matchId) {
             try {
-                const matchToEdit = finishedMatches.find(m => m.id === matchId);
-                if (matchToEdit) {
-                    finalizingMatchId = matchId; // Usamos finalizingMatchId para indicar qual partida está sendo editada/finalizada
-                    isEditingFinishedGameMode = true; // Indica que estamos editando uma partida já finalizada
-                    
-                    finalizePageTitle.textContent = "Editar Placar e Estatísticas da Partida";
-                    scoreTeamAInput.value = matchToEdit.scoreA;
-                    scoreTeamBInput.value = matchToEdit.scoreB;
-                    scoreErrorP.classList.add('hidden');
-                    statsErrorP.classList.add('hidden');
-                    statsTeamAContainer.innerHTML = '';
+                finalizingMatchId = matchId; 
+                isEditingFinishedGameMode = true; 
+                const match = finishedMatches.find(m => m.id === matchId);
+
+                if (match) {
+                    finalizePageTitle.textContent = "Editar Placar e Estatísticas da Partida Finalizada";
+                    statsTeamAContainer.innerHTML = ''; 
                     statsTeamBContainer.innerHTML = '';
+                    scoreTeamAInput.value = match.scoreA; 
+                    scoreTeamBInput.value = match.scoreB;
+                    scoreErrorP.classList.add('hidden'); statsErrorP.classList.add('hidden');
 
                     const createStatInputRow = (player, existingStats = {}) => {
                         const playerRow = document.createElement('div');
                         playerRow.className = 'stats-player-item py-2';
+                        const overallForDisplay = player.overallBeforeMatchDisplay !== undefined ? player.overallBeforeMatchDisplay : player.overall;
+
                         playerRow.innerHTML = `
                             <div>
-                                <span class="stats-player-name">${getPositionIcon(player.position)} ${player.name} (OVR: ${Math.round(player.overall)})</span>
+                                <span class="stats-player-name">${getPositionIcon(player.position)} ${player.name} (OVR Base: ${Math.round(overallForDisplay)})</span>
                                 <div class="stats-input-group mt-1">
                                     <label for="stat-gols-${player.id}" class="text-xs">G:</label>
                                     <input type="number" id="stat-gols-${player.id}" data-player-id="${player.id}" data-stat="gols" value="${existingStats.gols || 0}" min="0" class="stat-input">
                                     <label for="stat-assistencias-${player.id}" class="text-xs ml-2">A:</label>
                                     <input type="number" id="stat-assistencias-${player.id}" data-player-id="${player.id}" data-stat="assistencias" value="${existingStats.assistencias || 0}" min="0" class="stat-input">
+                                    <label for="stat-desarmes-${player.id}" class="text-xs ml-2">DS:</label> 
+                                    <input type="number" id="stat-desarmes-${player.id}" data-player-id="${player.id}" data-stat="desarmes" value="${existingStats.desarmes || 0}" min="0" class="stat-input">
                                     <label for="stat-defesas-${player.id}" class="text-xs ml-2">D:</label>
                                     <input type="number" id="stat-defesas-${player.id}" data-player-id="${player.id}" data-stat="defesas" value="${existingStats.defesas || 0}" min="0" class="stat-input">
                                     <label for="stat-golsSofridos-${player.id}" class="text-xs ml-2">GS:</label>
                                     <input type="number" id="stat-golsSofridos-${player.id}" data-player-id="${player.id}" data-stat="golsSofridos" value="${existingStats.golsSofridos || 0}" min="0" class="stat-input">
-                                    <label for="stat-golsContra-${player.id}" class="text-xs ml-2">GC:</label>
+                                    <label for="stat-golsContra-${player.id}" class="text-xs ml-2">GC:</label> 
                                     <input type="number" id="stat-golsContra-${player.id}" data-player-id="${player.id}" data-stat="golsContra" value="${existingStats.golsContra || 0}" min="0" class="stat-input">
                                 </div>
                             </div>
                         `;
                         return playerRow;
                     };
-
-                    matchToEdit.teamA.players.forEach(player => statsTeamAContainer.appendChild(createStatInputRow(player, player.matchStats)));
-                    matchToEdit.teamB.players.forEach(player => statsTeamBContainer.appendChild(createStatInputRow(player, player.matchStats)));
                     
+                    const allMatchPlayers = [...match.teamA.players, ...match.teamB.players];
+                    populateMVPSelects(allMatchPlayers, match.mvpId, match.bolaMurchaId);
+
+                    match.teamA.players.forEach(player => statsTeamAContainer.appendChild(createStatInputRow(player, player.matchStats)));
+                    match.teamB.players.forEach(player => statsTeamBContainer.appendChild(createStatInputRow(player, player.matchStats)));
                     window.showPage(page6);
                 }
             } catch (error) {
@@ -1431,10 +1497,10 @@
         }
 
 
-        window.promptFinalizeMatch = function(matchId) { // Para finalizar uma partida agendada
+        window.promptFinalizeMatch = function(matchId) { 
             try {
                 finalizingMatchId = matchId;
-                isEditingFinishedGameMode = false; // Não estamos editando uma finalizada, mas sim finalizando uma agendada
+                isEditingFinishedGameMode = false; 
                 const match = scheduledMatches.find(m => m.id === matchId);
                 if (match) {
                     finalizePageTitle.textContent = "Finalizar Partida e Registrar Placar";
@@ -1454,17 +1520,23 @@
                                     <input type="number" id="stat-gols-${player.id}" data-player-id="${player.id}" data-stat="gols" value="0" min="0" class="stat-input">
                                     <label for="stat-assistencias-${player.id}" class="text-xs ml-2">A:</label>
                                     <input type="number" id="stat-assistencias-${player.id}" data-player-id="${player.id}" data-stat="assistencias" value="0" min="0" class="stat-input">
+                                    <label for="stat-desarmes-${player.id}" class="text-xs ml-2">DS:</label>
+                                    <input type="number" id="stat-desarmes-${player.id}" data-player-id="${player.id}" data-stat="desarmes" value="0" min="0" class="stat-input">
                                     <label for="stat-defesas-${player.id}" class="text-xs ml-2">D:</label>
                                     <input type="number" id="stat-defesas-${player.id}" data-player-id="${player.id}" data-stat="defesas" value="0" min="0" class="stat-input">
                                     <label for="stat-golsSofridos-${player.id}" class="text-xs ml-2">GS:</label>
                                     <input type="number" id="stat-golsSofridos-${player.id}" data-player-id="${player.id}" data-stat="golsSofridos" value="0" min="0" class="stat-input">
-                                    <label for="stat-golsContra-${player.id}" class="text-xs ml-2">GC:</label> <input type="number" id="stat-golsContra-${player.id}" data-player-id="${player.id}" data-stat="golsContra" value="0" min="0" class="stat-input">
+                                    <label for="stat-golsContra-${player.id}" class="text-xs ml-2">GC:</label> 
+                                    <input type="number" id="stat-golsContra-${player.id}" data-player-id="${player.id}" data-stat="golsContra" value="0" min="0" class="stat-input">
                                 </div>
                             </div>
                         `;
                         return playerRow;
                     };
 
+                    const allMatchPlayers = [...match.teamA.players, ...match.teamB.players];
+                    populateMVPSelects(allMatchPlayers); 
+                    
                     match.teamA.players.forEach(player => statsTeamAContainer.appendChild(createStatInputRow(player)));
                     match.teamB.players.forEach(player => statsTeamBContainer.appendChild(createStatInputRow(player)));
                     window.showPage(page6);
@@ -1474,6 +1546,26 @@
                 showMessageBox(`Erro ao preparar finalização: ${error.message}`, "error");
             }
         }
+        
+        function populateMVPSelects(allMatchPlayers, selectedMvpId = null, selectedBolaMurchaId = null) {
+            mvpSelect.innerHTML = '<option value="">Selecione...</option>';
+            bolaMurchaSelect.innerHTML = '<option value="">Selecione...</option>';
+
+            allMatchPlayers.forEach(player => {
+                const optionMvp = document.createElement('option');
+                optionMvp.value = player.id;
+                optionMvp.textContent = player.name;
+                if (player.id === selectedMvpId) optionMvp.selected = true;
+                mvpSelect.appendChild(optionMvp);
+
+                const optionBolaMurcha = document.createElement('option');
+                optionBolaMurcha.value = player.id;
+                optionBolaMurcha.textContent = player.name;
+                if (player.id === selectedBolaMurchaId) optionBolaMurcha.selected = true;
+                bolaMurchaSelect.appendChild(optionBolaMurcha);
+            });
+        }
+
 
         cancelFinalizeBtn.addEventListener('click', () => {
             finalizingMatchId = null;
@@ -1481,33 +1573,53 @@
             window.showPage(page1);
         });
         
-        function calculateOverallChange(player, stats, matchResult) { 
+        // LÓGICA DE PROGRESSÃO DE OVERALL ATUALIZADA (v6.12)
+        function calculateOverallChange(player, stats, matchResult, isMvp, isBolaMurcha) { 
             let overallChange = 0;
+            // Gols Marcados
             if (stats.gols > 0) {
                 if (player.position === 'ATA') overallChange += stats.gols * 0.25;
-                else if (player.position === 'MEI') overallChange += stats.gols * 0.5;
+                else if (player.position === 'MEI') overallChange += stats.gols * 0.25; 
                 else if (player.position === 'ZAG') overallChange += stats.gols * 0.5; 
-                else if (player.position === 'GO') overallChange += stats.gols * 0.75;
+                else if (player.position === 'GO') overallChange += stats.gols * 0.5;  
             }
+            // Assistências
             if (stats.assistencias > 0) {
-                if (player.position === 'ATA') overallChange += stats.assistencias * 0.5; 
+                if (player.position === 'ATA') overallChange += stats.assistencias * 0.25; 
                 else if (player.position === 'MEI') overallChange += stats.assistencias * 0.25;
                 else if (player.position === 'ZAG') overallChange += stats.assistencias * 0.5;
                 else if (player.position === 'GO') overallChange += stats.assistencias * 0.5; 
             }
+            // Desarmes
+            if (stats.desarmes > 0) {
+                if (player.position === 'ATA') overallChange += stats.desarmes * 0.25;
+                else if (player.position === 'MEI') overallChange += stats.desarmes * 0.25;
+                else if (player.position === 'ZAG') overallChange += stats.desarmes * 0.15;
+                else if (player.position === 'GO') overallChange += stats.desarmes * 0.2;
+            }
+            // Defesas
             if (stats.defesas > 0) {
-                if (player.position === 'GO') overallChange += stats.defesas * 0.1;
+                if (player.position === 'GO') overallChange += stats.defesas * 0.15; 
                 else overallChange += stats.defesas * 0.5; 
             }
+            // Gols Sofridos
             if (stats.golsSofridos > 0) {
-                if (player.position === 'GO') overallChange -= stats.golsSofridos * 0.3; 
+                if (player.position === 'GO') overallChange -= stats.golsSofridos * 0.25; 
                 else overallChange -= stats.golsSofridos * 0.25; 
             }
+            // Gols Contra
             if (stats.golsContra > 0) {
                 overallChange -= stats.golsContra * 0.75;
             }
+
+            // Bônus/Penalidade por resultado
             if (matchResult === 'win') overallChange += 0.25; 
             else if (matchResult === 'loss') overallChange -= 0.5;
+            
+            // Bônus/Penalidade por Destaque
+            if(isMvp) overallChange += 0.5;
+            if(isBolaMurcha) overallChange -= 0.5;
+            
             return overallChange; 
         }
 
@@ -1516,41 +1628,42 @@
             try {
                 const finalScoreA = parseInt(scoreTeamAInput.value); 
                 const finalScoreB = parseInt(scoreTeamBInput.value);
+                const mvpPlayerId = parseInt(mvpSelect.value);
+                const bolaMurchaPlayerId = parseInt(bolaMurchaSelect.value);
 
                 if (isNaN(finalScoreA) || finalScoreA < 0 || isNaN(finalScoreB) || finalScoreB < 0) {
-                    scoreErrorP.classList.remove('hidden'); return;
+                    scoreErrorP.classList.remove('hidden');
+                    return;
                 }
-                scoreErrorP.classList.add('hidden'); statsErrorP.classList.add('hidden'); 
+                scoreErrorP.classList.add('hidden');
+                statsErrorP.classList.add('hidden'); 
 
                 let matchData;
                 let matchIndex;
-                let sourceList; // 'scheduledMatches' ou 'finishedMatches'
+                let sourceListIsScheduled = false;
 
                 if (isEditingFinishedGameMode) {
                     matchIndex = finishedMatches.findIndex(m => m.id === finalizingMatchId);
-                    if (matchIndex > -1) {
-                        matchData = finishedMatches[matchIndex];
-                        sourceList = 'finishedMatches';
-                    }
+                    if (matchIndex > -1) matchData = finishedMatches[matchIndex];
                 } else {
                     matchIndex = scheduledMatches.findIndex(m => m.id === finalizingMatchId);
                     if (matchIndex > -1) {
                         matchData = scheduledMatches[matchIndex];
-                        sourceList = 'scheduledMatches';
+                        sourceListIsScheduled = true;
                     }
                 }
-
+                
                 if (!matchData) {
-                    showMessageBox("Erro: Partida não encontrada para finalizar/editar.", "error");
+                    showMessageBox("Erro: Partida não encontrada.", "error");
                     return;
                 }
-                
+                    
                 let allStatsValid = true;
                 const collectedStats = { teamA: [], teamB: [] };
                 
                 const processTeamStats = (teamKey, teamContainerId) => {
                     matchData[teamKey].players.forEach(pInMatch => {
-                        const playerStats = { gols: 0, assistencias: 0, defesas: 0, golsSofridos: 0, golsContra: 0 };
+                        const playerStats = { gols: 0, assistencias: 0, desarmes: 0, defesas: 0, golsSofridos: 0, golsContra: 0 };
                         document.querySelectorAll(`#${teamContainerId} input[data-player-id="${pInMatch.id}"]`).forEach(input => {
                             const statValue = parseInt(input.value);
                             if (isNaN(statValue) || statValue < 0) allStatsValid = false;
@@ -1567,41 +1680,50 @@
                     statsErrorP.classList.remove('hidden'); return;
                 }
                 
-                // Atualiza placar e dados da partida
+                if (isEditingFinishedGameMode) {
+                    const revertOverallChanges = (teamInMatch) => {
+                        teamInMatch.players.forEach(pInMatch => {
+                            const playerGlobal = players.find(pl => pl.id === pInMatch.id);
+                            if (playerGlobal && pInMatch.overallChangeForDisplay !== undefined) {
+                                playerGlobal.overall -= pInMatch.overallChangeForDisplay; 
+                            }
+                        });
+                    };
+                    revertOverallChanges(matchData.teamA);
+                    revertOverallChanges(matchData.teamB);
+                }
+                
                 matchData.scoreA = finalScoreA; 
                 matchData.scoreB = finalScoreB; 
-                matchData.finalizedAt = new Date().toISOString();
+                if (sourceListIsScheduled) matchData.finalizedAt = new Date().toISOString(); 
                 
+                matchData.mvpId = mvpPlayerId || null;
+                matchData.bolaMurchaId = bolaMurchaPlayerId || null;
+                matchData.mvpName = players.find(p => p.id === mvpPlayerId)?.name || null;
+                matchData.bolaMurchaName = players.find(p => p.id === bolaMurchaPlayerId)?.name || null;
+
                 const resultTeamA = finalScoreA > finalScoreB ? 'win' : (finalScoreA < finalScoreB ? 'loss' : 'draw');
                 const resultTeamB = finalScoreB > finalScoreA ? 'win' : (finalScoreB < finalScoreA ? 'loss' : 'draw');
-
+                
                 const applyOverallUpdates = (teamCollectedStats, teamResult, teamInMatchData) => {
                     teamCollectedStats.forEach(pStat => {
                         const playerGlobal = players.find(pl => pl.id === pStat.playerId);
                         const playerInMatch = teamInMatchData.players.find(p => p.id === pStat.playerId);
 
                         if (playerGlobal && playerInMatch) {
-                            // Para edição de partida finalizada, reverter a mudança anterior antes de aplicar a nova
-                            let overallBaseForCalc = playerGlobal.overall;
-                            if (isEditingFinishedGameMode && playerInMatch.overallChangeForDisplay !== undefined) {
-                                overallBaseForCalc = playerGlobal.overall - playerInMatch.overallChangeForDisplay;
-                            } else if (!isEditingFinishedGameMode) {
-                                // Se está finalizando pela primeira vez, o overall base é o atual do jogador global
-                                playerInMatch.overallBeforeMatchDisplay = playerGlobal.overall;
-                            }
-                            // Se overallBeforeMatchDisplay já existe (de uma finalização anterior), use-o
-                            overallBaseForCalc = playerInMatch.overallBeforeMatchDisplay !== undefined ? playerInMatch.overallBeforeMatchDisplay : overallBaseForCalc;
-
-
-                            const overallChange = calculateOverallChange({ ...playerGlobal, overall: overallBaseForCalc }, pStat.stats, teamResult);
+                            const overallBeforeThisCalc = playerGlobal.overall; 
+                            const isMvp = playerGlobal.id === mvpPlayerId;
+                            const isBolaMurcha = playerGlobal.id === bolaMurchaPlayerId;
+                            const overallChange = calculateOverallChange(playerGlobal, pStat.stats, teamResult, isMvp, isBolaMurcha);
                             
-                            playerGlobal.overall = overallBaseForCalc + overallChange;
+                            playerGlobal.overall += overallChange; 
                             if (playerGlobal.overall > 100) playerGlobal.overall = 100;
                             if (playerGlobal.overall < 50) playerGlobal.overall = 50;
 
                             playerInMatch.matchStats = pStat.stats; 
+                            playerInMatch.overallBeforeMatchDisplay = overallBeforeThisCalc; 
                             playerInMatch.overallAfterMatchDisplay = playerGlobal.overall; 
-                            playerInMatch.overallChangeForDisplay = playerGlobal.overall - overallBaseForCalc; 
+                            playerInMatch.overallChangeForDisplay = playerGlobal.overall - overallBeforeThisCalc; 
                         }
                     });
                 };
@@ -1609,12 +1731,11 @@
                 applyOverallUpdates(collectedStats.teamA, resultTeamA, matchData.teamA);
                 applyOverallUpdates(collectedStats.teamB, resultTeamB, matchData.teamB);
                 
-                if (!isEditingFinishedGameMode) { // Se estava finalizando uma partida agendada
-                    scheduledMatches.splice(matchIndex, 1); // Remove da lista de agendadas
-                    finishedMatches.push(matchData); // Adiciona à lista de finalizadas
+                if (sourceListIsScheduled) { 
+                    scheduledMatches.splice(matchIndex, 1); 
+                    finishedMatches.push(matchData); 
                 }
-                // Se estava editando uma finalizada, matchData já é uma referência ao objeto em finishedMatches, então as alterações são diretas.
-
+                
                 savePlayersToLocalStorage();
                 saveScheduledMatchesToLocalStorage();
                 saveFinishedMatchesToLocalStorage();
@@ -1636,8 +1757,8 @@
         // --- Inicialização ---
         document.getElementById('backToPlayersBtnPage2').addEventListener('click', () => window.showPage(page1));
         document.getElementById('backToDivisionBtnPage3').addEventListener('click', () => { 
-            if (editingMatchId) { 
-                const match = scheduledMatches.find(m => m.id === editingMatchId) || finishedMatches.find(m => m.id === editingMatchId) ; 
+            if (editingMatchId && !isEditingFinishedGameMode) { 
+                const match = scheduledMatches.find(m => m.id === editingMatchId);
                 if (match) {
                     renderEditMatchTeamsPage(match); 
                     window.showPage(page7_edit_match_teams);
@@ -1646,6 +1767,7 @@
                     window.showPage(page1);
                 }
             } else { 
+                 editingMatchId = null; 
                 window.showPage(page2);
             }
         }); 
